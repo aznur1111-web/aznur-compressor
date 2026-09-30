@@ -6,7 +6,16 @@
 <title>Aznur Image Compressor</title>
 <meta name="description" content="Compress and convert images between many formats. Output never exceeds input size. Fast, secure, private.">
 <meta name="referrer" content="no-referrer">
-<!-- Security note: CSP, X-Content-Type-Options and frame-ancestors must be set as HTTP response headers by the host. -->
+
+<!-- Google Analytics 4 (Replace G-XXXXXXXXXX with your actual Measurement ID) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX');
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
@@ -165,7 +174,7 @@ footer{margin-top:50px;text-align:center;color:var(--muted);font-size:.85rem;pad
     </div>
   </div>
   <div class="stats-group">
-    <div class="stats-label"><span id="globalLabel">All Time</span></div>
+    <div class="stats-label"><span id="globalLabel">All Time (This Browser)</span></div>
     <div class="grid">
       <div class="stat-card"><div class="l">Images Converted</div><div class="v" id="globalConverted">-</div></div>
       <div class="stat-card"><div class="l">Space Saved</div><div class="v" id="globalSaved">-</div></div>
@@ -183,7 +192,9 @@ footer{margin-top:50px;text-align:center;color:var(--muted);font-size:.85rem;pad
 (() => {
 'use strict';
 
-const API_URL = ''; // Leave empty for now. Paste your stats Worker URL here later for all-users totals.
+// NOTE: For a live "All Users" counter on the website, you need a lightweight backend 
+// (like Cloudflare KV, Firebase, or Supabase). Google Analytics is for tracking, 
+// not for reading live totals back to the frontend.
 
 const LIMITS = Object.freeze({
   maxFilesMemory: 10000,
@@ -217,14 +228,14 @@ const fileList = $('fileList'), filesSection = $('filesSection'), statsBar = $('
 const zipBtn = $('downloadAllBtn'), outputFormat = $('outputFormat'), svgOptions = $('svgOptions');
 
 /* ---------- state ---------- */
-let outDir = null;                 // chosen output folder handle (folder mode)
-let heldBytes = 0;                 // output bytes held in RAM (memory mode only)
-let total = 0;                     // files accepted since last clear
-const items = [];                  // memory mode only: kept for ZIP. Folder mode never stores results.
+let outDir = null;
+let heldBytes = 0;
+let total = 0;
+const items = [];
 const queue = []; let qHead = 0; let active = 0;
 const counts = { queued: 0, processing: 0, done: 0, failed: 0 };
-const usedNames = new Set();       // reserved output paths in this folder session
-const dirCache = new Map();        // cached subfolder handles
+const usedNames = new Set();
+const dirCache = new Map();
 let browserSupport = {}, ffmpeg = null, ffmpegReady = false, ffmpegLoadPromise = null, ffmpegBusy = false;
 const ffmpegWaiters = [];
 
@@ -258,45 +269,47 @@ const getSettings = () => ({
 
 /* ---------- statistics (session + all time) ---------- */
 const LOCAL_KEY = 'aznurImageCompressorStats_v1';
-const backendOn = Boolean(API_URL);
 const num = (v) => (Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
 function loadLocal() {
   try { const p = JSON.parse(localStorage.getItem(LOCAL_KEY) || '{}'); return { converted: num(p.converted), savedBytes: num(p.savedBytes) }; }
   catch { return { converted: 0, savedBytes: 0 }; }
 }
-let sessionStats = { converted: 0, savedBytes: 0 }, localStats = loadLocal(), globalStats = null;
+let sessionStats = { converted: 0, savedBytes: 0 }, localStats = loadLocal();
+
 function renderStats() {
   $('sessionConverted').textContent = sessionStats.converted.toLocaleString();
   $('sessionSaved').textContent = formatFileSize(sessionStats.savedBytes);
-  const g = backendOn ? globalStats : localStats;
-  $('globalLabel').textContent = backendOn ? 'All Time (All Users)' : 'All Time (This Browser)';
-  $('globalConverted').textContent = g ? g.converted.toLocaleString() : '-';
-  $('globalSaved').textContent = g ? formatFileSize(g.savedBytes) : '-';
+  $('globalLabel').textContent = 'All Time (This Browser)';
+  $('globalConverted').textContent = localStats.converted.toLocaleString();
+  $('globalSaved').textContent = formatFileSize(localStats.savedBytes);
 }
-async function loadGlobalStats() {
-  if (!backendOn) return;
-  try {
-    const r = await fetch(API_URL, { cache: 'no-store' });
-    if (!r.ok) throw new Error('Bad response');
-    const d = await r.json();
-    globalStats = { converted: num(Number(d.converted)), savedBytes: num(Number(d.saved_bytes)) };
-    renderStats();
-  } catch (e) { console.warn('Could not load global statistics.', e); }
-}
+
 function recordConversion(orig, out) {
   const saved = Math.max(0, orig - out);
   sessionStats.converted++; sessionStats.savedBytes += saved;
-  if (backendOn) {
-    if (globalStats) { globalStats.converted++; globalStats.savedBytes += saved; }
-    fetch(API_URL + '/record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ saved }), keepalive: true }).catch(() => {});
-  } else {
-    localStats.converted++; localStats.savedBytes += saved;
-    try { localStorage.setItem(LOCAL_KEY, JSON.stringify(localStats)); } catch {}
+  
+  // 1. Save to Browser Memory (localStorage)
+  localStats.converted++; localStats.savedBytes += saved;
+  try { localStorage.setItem(LOCAL_KEY, JSON.stringify(localStats)); } catch {}
+  
+  // 2. Send to Google Analytics (if gtag is loaded)
+  if (typeof gtag === 'function') {
+    gtag('event', 'image_compressed', {
+      event_category: 'engagement',
+      event_label: 'Image Compression',
+      value: 1, // Number of images
+      saved_bytes: saved // Custom metric (must be registered in GA4 dashboard)
+    });
   }
+
   renderStats();
 }
-$('statsResetBtn').addEventListener('click', () => { sessionStats = { converted: 0, savedBytes: 0 }; renderStats(); });
-renderStats(); loadGlobalStats(); if (backendOn) setInterval(loadGlobalStats, 60000);
+
+$('statsResetBtn').addEventListener('click', () => { 
+  sessionStats = { converted: 0, savedBytes: 0 }; 
+  renderStats(); 
+});
+renderStats();
 
 /* ---------- UI wiring ---------- */
 const updateQuality = () => { $('qualityValue').textContent = $('qualityLevel').value + '%'; };
@@ -315,11 +328,11 @@ zipBtn.addEventListener('click', downloadAllAsZip);
 
 window.addEventListener('beforeunload', (e) => { if (counts.queued || counts.processing) { e.preventDefault(); e.returnValue = ''; } });
 
-/* ---------- folder mode: stream each result straight to disk ---------- */
+/* ---------- folder mode ---------- */
 const pickerSupported = typeof window.showDirectoryPicker === 'function' && window.isSecureContext;
 if (!pickerSupported) {
   $('chooseFolderBtn').disabled = true;
-  $('folderStatus').textContent = 'Saving to a folder needs Chrome, Edge or Opera on desktop over HTTPS (and not inside an embedded frame). Results stay in memory (up to 500 MB, then download as ZIP).';
+  $('folderStatus').textContent = 'Saving to a folder needs Chrome, Edge or Opera on desktop over HTTPS. Results stay in memory (up to 500 MB, then download as ZIP).';
 }
 $('chooseFolderBtn').addEventListener('click', async () => {
   try {
@@ -328,7 +341,7 @@ $('chooseFolderBtn').addEventListener('click', async () => {
     $('folderStatus').textContent = 'Saving straight to "' + outDir.name + '". Nothing is kept in memory and no ZIP is made.';
     renderUI();
   } catch (err) {
-    if (err.name !== 'AbortError') $('folderStatus').textContent = 'Folder access is unavailable here. Open the page directly in the browser (not inside an embed).';
+    if (err.name !== 'AbortError') $('folderStatus').textContent = 'Folder access is unavailable here.';
   }
 });
 
@@ -351,8 +364,8 @@ async function saveToFolder(blob, name, dirs) {
   for (let i = 1; !finalName; i++) {
     const cand = i === 1 ? name : `${base}_${i}${ext}`;
     if (usedNames.has(prefix + cand)) continue;
-    usedNames.add(prefix + cand);                       // reserve first so parallel jobs never collide
-    try { await dir.getFileHandle(cand); }              // exists on disk already: never overwrite
+    usedNames.add(prefix + cand);
+    try { await dir.getFileHandle(cand); }
     catch (e) { if (e.name === 'NotFoundError') finalName = cand; else throw e; }
   }
   const fh = await dir.getFileHandle(finalName, { create: true });
@@ -550,7 +563,7 @@ async function rasterToSvg(bmp, s) {
   return new Blob([`<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${t.w}" height="${t.h}" viewBox="0 0 ${t.w} ${t.h}"><image width="${t.w}" height="${t.h}" href="${url}"/></svg>`], { type: 'image/svg+xml' });
 }
 
-/* ---------- SVG sanitizer (allowlist) ---------- */
+/* ---------- SVG sanitizer ---------- */
 const escapeRegExp = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 function sanitizeSvg(text, o) {
   const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
@@ -675,7 +688,7 @@ function handleFiles(list) {
     const rel = file.webkitRelativePath ? file.webkitRelativePath.split('/') : [];
     const f = {
       id: newId(), file, name: sanitizeFilename(file.name), size: file.size, status: 'queued',
-      dirs: rel.length > 2 ? rel.slice(1, -1).map(sanitizeFilename) : [],   // keep sub-folder structure (drops the picked root folder's name)
+      dirs: rel.length > 2 ? rel.slice(1, -1).map(sanitizeFilename) : [],
       blob: null, url: null, outName: '', newSize: 0, kept: false, savedName: '', row: null
     };
     total++; counts.queued++; queue.push(f);
@@ -719,13 +732,15 @@ async function processFile(f, s) {
     }
     if (!blob || !blob.size) throw new Error('Conversion failed.');
 
-    const keep = s.format !== 'original' && blob.size >= f.size;   // never output a bigger file than the input
+    const keep = s.format !== 'original' && blob.size >= f.size;
     const out = keep ? file : blob;
     f.kept = keep; f.newSize = out.size;
+    
+    // REMOVED '_aznur.' SUFFIX HERE:
     f.outName = keep ? f.name : `${f.name.replace(/\.[^/.]+$/, '')}.${ext}`;
 
     if (outDir) {
-      f.savedName = await saveToFolder(out, f.outName, f.dirs);   // straight to disk; nothing retained in RAM
+      f.savedName = await saveToFolder(out, f.outName, f.dirs);
     } else {
       if (heldBytes + out.size > LIMITS.maxMemoryOutput) throw new Error('MEMORY_FULL');
       heldBytes += out.size; f.blob = out; f.url = URL.createObjectURL(out);
@@ -739,7 +754,7 @@ async function processFile(f, s) {
     } else { console.error('Error processing', f.name, err); setStatus(f, 'failed', 'Error'); }
   } finally {
     if (bmp && typeof bmp.close === 'function') bmp.close();
-    if (outDir) f.file = null;          // folder mode: release the input reference too
+    if (outDir) f.file = null;
     renderUI();
   }
 }
