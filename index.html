@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aznur Image Compressor</title>
+<meta name="description" content="Compress and convert images between many formats. Output never exceeds input size. Fast, secure, private.">
+<meta name="referrer" content="no-referrer">
+<!-- Security note: CSP, X-Content-Type-Options and frame-ancestors must be set as HTTP response headers by the host. -->
+<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<style>
+:root{--bg:#fafafa;--surface:#fff;--border:#e7e5e4;--text:#1c1917;--muted:#57534e;--accent:#f59e0b;--accent-h:#d97706;--ok:#10b981;--err:#ef4444;--info:#3b82f6;--svg:#8b5cf6;--r:8px;--rl:12px;--sh:0 1px 2px rgba(0,0,0,.05)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
+.container{max-width:900px;margin:0 auto;padding:40px 20px}
+header{text-align:center;margin-bottom:40px}
+h1{font-size:2.5rem;font-weight:700;margin-bottom:10px}
+.subtitle{font-size:1.1rem;color:var(--muted);max-width:600px;margin:0 auto}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:24px;margin-bottom:24px;box-shadow:var(--sh)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px}
+.fg{display:flex;flex-direction:column;gap:8px}
+label{font-size:.85rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+select,input[type=number],input[type=range]{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r);font-size:1rem;background:#fff}
+select:focus,input:focus{outline:none;border-color:var(--accent)}
+.qv{font-weight:700;color:var(--accent)}
+.row{display:flex;align-items:center;gap:10px}
+.cb{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:.9rem;color:var(--muted)}
+.cb input{width:auto}
+.svg-opts{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:none}
+.svg-opts.visible{display:block}
+.svg-opts label{font-size:.8rem;text-transform:none;font-weight:500}
+#folderStatus,#notice{font-size:.85rem;color:var(--muted)}
+#notice{margin-bottom:12px;min-height:1.2em}
+.upload-zone{background:var(--surface);border:2px dashed var(--border);border-radius:var(--rl);padding:60px 20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:20px;user-select:none}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:#fffbeb}
+.upload-icon{font-size:3rem;margin-bottom:15px}
+.btn{background:var(--text);color:#fff;padding:12px 30px;border-radius:var(--r);font-weight:600;border:none;cursor:pointer;font-size:1rem;margin-top:10px}
+.btn:hover{background:#333}
+.btn.secondary{background:transparent;color:var(--text);border:1px solid var(--border);margin-left:8px}
+.btn.secondary:hover{background:var(--bg)}
+.hidden{display:none}
+.stats-bar{display:none;justify-content:space-between;flex-wrap:wrap;gap:8px;background:var(--surface);padding:15px 20px;border-radius:var(--r);border:1px solid var(--border);margin-bottom:20px;font-size:.9rem;color:var(--muted)}
+.stat-item{display:flex;gap:5px}
+.stat-item b{color:var(--text)}
+.files-section{display:none}
+.sec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.sec-title{font-size:1.25rem;font-weight:700}
+.zip-btn{background:var(--accent);color:#fff;padding:8px 16px;border-radius:var(--r);font-weight:600;border:none;cursor:pointer;display:none}
+.zip-btn:hover{background:var(--accent-h)}
+.zip-btn:disabled{opacity:.6;cursor:not-allowed}
+.file-list{display:flex;flex-direction:column;gap:10px}
+.file-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:15px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.file-item.processing{border-left:4px solid var(--accent)}
+.file-item.completed{border-left:4px solid var(--ok)}
+.file-item.failed{border-left:4px solid var(--err)}
+.file-item.fallback{border-left:4px solid var(--info)}
+.file-item.svg-optimized{border-left:4px solid var(--svg)}
+.file-info{flex:1;min-width:200px}
+.file-name{font-weight:600;margin-bottom:4px;word-break:break-all}
+.file-meta{font-size:.85rem;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.badge{padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:700;text-transform:uppercase}
+.badge-queued{background:#fef3c7;color:#92400e}
+.badge-processing{background:#ffedd5;color:#9a3412}
+.badge-completed{background:#d1fae5;color:#065f46}
+.badge-failed{background:#fee2e2;color:#991b1b}
+.badge-fallback{background:#dbeafe;color:#1e40af}
+.badge-svg-optimized{background:#ede9fe;color:#5b21b6}
+.action-btn{background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:4px;font-size:.85rem;cursor:pointer;text-decoration:none;font-weight:600}
+.action-btn:hover{background:var(--bg)}
+.action-btn:disabled{opacity:.6;cursor:not-allowed}
+.good{font-weight:600;color:var(--ok)}
+.stats-group+.stats-group{margin-top:24px}
+.stats-label{font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.stat-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:24px 20px;text-align:center}
+.stat-card .l{font-size:.8rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.stat-card .v{font-size:1.75rem;font-weight:700}
+footer{margin-top:50px;text-align:center;color:var(--muted);font-size:.85rem;padding-top:20px;border-top:1px solid var(--border)}
+@media(max-width:600px){.upload-zone{padding:40px 20px}h1{font-size:2rem}.btn.secondary{margin-left:0}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <h1>Aznur Image Compressor</h1>
+  <p class="subtitle">Professional-grade image &amp; SVG optimization directly in your browser. Your images are processed locally on your device.</p>
+</header>
+
+<div class="card"><div class="grid">
+  <div class="fg">
+    <label for="outputFormat">Output Format</label>
+    <select id="outputFormat"></select>
+    <div class="svg-opts" id="svgOptions">
+      <label style="margin-bottom:8px;display:block">SVG Optimization Options</label>
+      <div class="cb"><input type="checkbox" id="svgRemoveMetadata" checked><label for="svgRemoveMetadata">Remove metadata &amp; comments</label></div>
+      <div class="cb"><input type="checkbox" id="svgRemoveHidden" checked><label for="svgRemoveHidden">Remove hidden elements</label></div>
+      <div class="cb"><input type="checkbox" id="svgMinifyPaths" checked><label for="svgMinifyPaths">Minify path data</label></div>
+      <div class="cb"><input type="checkbox" id="svgMergeStyles"><label for="svgMergeStyles">Merge styles</label></div>
+      <div class="cb"><input type="checkbox" id="svgRemoveUnusedDefs" checked><label for="svgRemoveUnusedDefs">Remove unused &lt;defs&gt;</label></div>
+      <div class="cb"><input type="checkbox" id="svgShortenIds"><label for="svgShortenIds">Shorten IDs</label></div>
+    </div>
+  </div>
+  <div class="fg">
+    <label for="qualityLevel">Quality: <span id="qualityValue" class="qv">80%</span></label>
+    <input type="range" id="qualityLevel" min="10" max="100" value="80">
+  </div>
+  <div class="fg">
+    <label>Resize Dimensions (px)</label>
+    <div class="row"><input type="number" id="resizeWidth" placeholder="Width" min="1"><span>x</span><input type="number" id="resizeHeight" placeholder="Height" min="1"></div>
+    <div class="cb"><input type="checkbox" id="lockRatio" checked><label for="lockRatio" style="font-size:.9rem;text-transform:none">Maintain Aspect Ratio</label></div>
+  </div>
+</div></div>
+
+<div class="card">
+  <div class="fg">
+    <label>Save Location</label>
+    <div class="row" style="flex-wrap:wrap;gap:12px">
+      <button class="action-btn" id="chooseFolderBtn" type="button">Choose output folder</button>
+      <span id="folderStatus">No folder chosen. Results stay in memory (up to 500 MB, then download as ZIP).</span>
+    </div>
+  </div>
+</div>
+
+<div class="upload-zone" id="dropZone">
+  <div class="upload-icon">📁</div>
+  <h2>Drop images here</h2>
+  <p style="color:var(--muted);margin-bottom:15px">or click to browse files (supports raster images &amp; SVG)</p>
+  <p style="color:var(--muted);font-size:.9rem;margin-bottom:15px">Supports: JPG, PNG, WebP, AVIF, GIF, BMP, SVG, HEIC, TIFF, ICO, and more</p>
+  <button class="btn" id="uploadBtn" type="button">Select Images</button>
+  <button class="btn secondary" id="pickFolderBtn" type="button">Select a Folder of Images</button>
+  <input type="file" id="fileInput" class="hidden" multiple accept="image/*,.svg,.heic,.heif,.tiff,.tif,.ico">
+  <input type="file" id="folderInput" class="hidden" webkitdirectory multiple>
+</div>
+<p id="notice" aria-live="polite"></p>
+
+<div class="stats-bar" id="statsBar">
+  <div class="stat-item"><span>Processing:</span><b id="activeCount">0</b></div>
+  <div class="stat-item"><span>Queued:</span><b id="queueCount">0</b></div>
+  <div class="stat-item"><span>Completed:</span><b id="completedCount">0</b></div>
+  <div class="stat-item"><span>Failed:</span><b id="failedCount">0</b></div>
+</div>
+
+<div class="files-section" id="filesSection">
+  <div class="sec-head">
+    <h3 class="sec-title">Your Files <small id="rowNote" style="font-weight:400;color:var(--muted);font-size:.8rem"></small></h3>
+    <div style="display:flex;gap:8px">
+      <button class="action-btn" id="clearBtn" type="button">Clear list</button>
+      <button class="zip-btn" id="downloadAllBtn" type="button">Download All as ZIP</button>
+    </div>
+  </div>
+  <div class="file-list" id="fileList"></div>
+</div>
+
+<div class="card" style="margin-top:40px" aria-label="Conversion statistics">
+  <h3 style="font-size:1.1rem;margin-bottom:4px">Conversion Statistics</h3>
+  <p style="font-size:.85rem;color:var(--muted);margin-bottom:20px">Your images are never uploaded.</p>
+  <div class="stats-group">
+    <div class="stats-label"><span>This Session</span><button class="action-btn" id="statsResetBtn" type="button">Reset Session</button></div>
+    <div class="grid">
+      <div class="stat-card"><div class="l">Images Converted</div><div class="v" id="sessionConverted">0</div></div>
+      <div class="stat-card"><div class="l">Space Saved</div><div class="v" id="sessionSaved">0 Bytes</div></div>
+    </div>
+  </div>
+  <div class="stats-group">
+    <div class="stats-label"><span id="globalLabel">All Time</span></div>
+    <div class="grid">
+      <div class="stat-card"><div class="l">Images Converted</div><div class="v" id="globalConverted">-</div></div>
+      <div class="stat-card"><div class="l">Space Saved</div><div class="v" id="globalSaved">-</div></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <p>&copy; Aznur Image Compressor. Images are processed locally in your browser and are not uploaded to any server.</p>
+  <p style="margin-top:8px;font-size:.8rem">Supports: JPG, PNG, WebP, AVIF, GIF, BMP, SVG, HEIC, HEIF, TIFF, ICO, and more</p>
+</footer>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+const API_URL = ''; // Leave empty for now. Paste your stats Worker URL here later for all-users totals.
+
+const LIMITS = Object.freeze({
+  maxFilesMemory: 10000,
+  maxFilesFolder: 50000,
+  maxMemoryOutput: 500 * 1024 * 1024,
+  maxFileBytes: 25 * 1024 * 1024,
+  maxDimension: 8000,
+  maxPixels: 64_000_000,
+  maxSvgBytes: 5 * 1024 * 1024,
+  concurrency: Math.min(3, Math.max(1, navigator.hardwareConcurrency || 4))
+});
+const MAX_ROWS = 50;
+
+const FORMAT = Object.freeze({
+  webp: { mime: 'image/webp', ext: 'webp', native: true },
+  jpeg: { mime: 'image/jpeg', ext: 'jpeg', native: true },
+  png:  { mime: 'image/png',  ext: 'png',  native: true },
+  avif: { mime: 'image/avif', ext: 'avif', native: false },
+  gif:  { mime: 'image/gif',  ext: 'gif',  native: false },
+  bmp:  { mime: 'image/bmp',  ext: 'bmp',  native: false },
+  svg:  { mime: 'image/svg+xml', ext: 'svg', native: true }
+});
+const FORMAT_ORDER = ['webp','jpeg','png','avif','gif','bmp','svg','original'];
+const FFMPEG_FORMATS = new Set(['webp','avif','jpeg','png','gif','bmp']);
+const ALLOWED_EXT = new Set(['.jpg','.jpeg','.png','.webp','.avif','.gif','.bmp','.svg','.heic','.heif','.tiff','.tif','.ico']);
+const ALLOWED_MIME = new Set(['image/jpeg','image/png','image/webp','image/avif','image/gif','image/bmp','image/svg+xml','image/heic','image/heif','image/tiff','image/x-icon','image/vnd.microsoft.icon']);
+
+const $ = (id) => document.getElementById(id);
+const dropZone = $('dropZone'), fileInput = $('fileInput'), folderInput = $('folderInput');
+const fileList = $('fileList'), filesSection = $('filesSection'), statsBar = $('statsBar');
+const zipBtn = $('downloadAllBtn'), outputFormat = $('outputFormat'), svgOptions = $('svgOptions');
+
+/* ---------- state ---------- */
+let outDir = null;                 // chosen output folder handle (folder mode)
+let heldBytes = 0;                 // output bytes held in RAM (memory mode only)
+let total = 0;                     // files accepted since last clear
+const items = [];                  // memory mode only: kept for ZIP. Folder mode never stores results.
+const queue = []; let qHead = 0; let active = 0;
+const counts = { queued: 0, processing: 0, done: 0, failed: 0 };
+const usedNames = new Set();       // reserved output paths in this folder session
+const dirCache = new Map();        // cached subfolder handles
+let browserSupport = {}, ffmpeg = null, ffmpegReady = false, ffmpegLoadPromise = null, ffmpegBusy = false;
+const ffmpegWaiters = [];
+
+/* ---------- helpers ---------- */
+const newId = () => { try { return crypto.randomUUID(); } catch { return 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10); } };
+const getExt = (n) => { const s = String(n || ''), d = s.lastIndexOf('.'); return d >= 0 ? s.slice(d).toLowerCase() : ''; };
+const sanitizeFilename = (name) => (String(name || 'image').replace(/[\\/:*?"<>|\u0000-\u001F]/g, '_').replace(/\s+/g, ' ').trim().replace(/^\.+/, '') || 'image').slice(0, 180);
+const isSvgFile = (f) => getExt(f.name) === '.svg' || f.type === 'image/svg+xml';
+function formatFileSize(b) {
+  if (!b) return '0 Bytes';
+  const s = ['Bytes','KB','MB','GB'], i = Math.min(3, Math.floor(Math.log(b) / Math.log(1024)));
+  return parseFloat((b / Math.pow(1024, i)).toFixed(2)) + ' ' + s[i];
+}
+const clampDimension = (v) => { const n = parseInt(v, 10); return Number.isFinite(n) ? String(Math.max(1, Math.min(LIMITS.maxDimension, n))) : ''; };
+function assertDimensions(w, h) {
+  if (!Number.isFinite(w) || !Number.isFinite(h) || w < 1 || h < 1) throw new Error('Invalid image dimensions.');
+  if (w > LIMITS.maxDimension || h > LIMITS.maxDimension) throw new Error('Image dimensions exceed the safety limit.');
+  if (w * h > LIMITS.maxPixels) throw new Error('Image pixel count exceeds the safety limit.');
+}
+function createCanvas(w, h) {
+  if (typeof OffscreenCanvas !== 'undefined') return new OffscreenCanvas(w, h);
+  const c = document.createElement('canvas'); c.width = w; c.height = h; return c;
+}
+const getSettings = () => ({
+  format: outputFormat.value,
+  quality: Number($('qualityLevel').value),
+  width: Number($('resizeWidth').value) || 0,
+  height: Number($('resizeHeight').value) || 0,
+  ratio: $('lockRatio').checked
+});
+
+/* ---------- statistics (session + all time) ---------- */
+const LOCAL_KEY = 'aznurImageCompressorStats_v1';
+const backendOn = Boolean(API_URL);
+const num = (v) => (Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
+function loadLocal() {
+  try { const p = JSON.parse(localStorage.getItem(LOCAL_KEY) || '{}'); return { converted: num(p.converted), savedBytes: num(p.savedBytes) }; }
+  catch { return { converted: 0, savedBytes: 0 }; }
+}
+let sessionStats = { converted: 0, savedBytes: 0 }, localStats = loadLocal(), globalStats = null;
+function renderStats() {
+  $('sessionConverted').textContent = sessionStats.converted.toLocaleString();
+  $('sessionSaved').textContent = formatFileSize(sessionStats.savedBytes);
+  const g = backendOn ? globalStats : localStats;
+  $('globalLabel').textContent = backendOn ? 'All Time (All Users)' : 'All Time (This Browser)';
+  $('globalConverted').textContent = g ? g.converted.toLocaleString() : '-';
+  $('globalSaved').textContent = g ? formatFileSize(g.savedBytes) : '-';
+}
+async function loadGlobalStats() {
+  if (!backendOn) return;
+  try {
+    const r = await fetch(API_URL, { cache: 'no-store' });
+    if (!r.ok) throw new Error('Bad response');
+    const d = await r.json();
+    globalStats = { converted: num(Number(d.converted)), savedBytes: num(Number(d.saved_bytes)) };
+    renderStats();
+  } catch (e) { console.warn('Could not load global statistics.', e); }
+}
+function recordConversion(orig, out) {
+  const saved = Math.max(0, orig - out);
+  sessionStats.converted++; sessionStats.savedBytes += saved;
+  if (backendOn) {
+    if (globalStats) { globalStats.converted++; globalStats.savedBytes += saved; }
+    fetch(API_URL + '/record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ saved }), keepalive: true }).catch(() => {});
+  } else {
+    localStats.converted++; localStats.savedBytes += saved;
+    try { localStorage.setItem(LOCAL_KEY, JSON.stringify(localStats)); } catch {}
+  }
+  renderStats();
+}
+$('statsResetBtn').addEventListener('click', () => { sessionStats = { converted: 0, savedBytes: 0 }; renderStats(); });
+renderStats(); loadGlobalStats(); if (backendOn) setInterval(loadGlobalStats, 60000);
+
+/* ---------- UI wiring ---------- */
+const updateQuality = () => { $('qualityValue').textContent = $('qualityLevel').value + '%'; };
+$('qualityLevel').addEventListener('input', updateQuality); updateQuality();
+outputFormat.addEventListener('change', () => svgOptions.classList.toggle('visible', outputFormat.value === 'svg'));
+for (const id of ['resizeWidth', 'resizeHeight']) $(id).addEventListener('input', (e) => { if (e.target.value) e.target.value = clampDimension(e.target.value); });
+
+$('uploadBtn').addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });
+$('pickFolderBtn').addEventListener('click', (e) => { e.stopPropagation(); folderInput.click(); });
+dropZone.addEventListener('click', (e) => { if (!e.target.closest('button')) fileInput.click(); });
+for (const inp of [fileInput, folderInput]) inp.addEventListener('change', () => { if (inp.files) handleFiles(inp.files); inp.value = ''; });
+for (const ev of ['dragenter', 'dragover']) dropZone.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.add('dragover'); });
+for (const ev of ['dragleave', 'drop']) dropZone.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('dragover'); });
+dropZone.addEventListener('drop', (e) => { if (e.dataTransfer?.files) handleFiles(e.dataTransfer.files); });
+zipBtn.addEventListener('click', downloadAllAsZip);
+
+window.addEventListener('beforeunload', (e) => { if (counts.queued || counts.processing) { e.preventDefault(); e.returnValue = ''; } });
+
+/* ---------- folder mode: stream each result straight to disk ---------- */
+const pickerSupported = typeof window.showDirectoryPicker === 'function' && window.isSecureContext;
+if (!pickerSupported) {
+  $('chooseFolderBtn').disabled = true;
+  $('folderStatus').textContent = 'Saving to a folder needs Chrome, Edge or Opera on desktop over HTTPS (and not inside an embedded frame). Results stay in memory (up to 500 MB, then download as ZIP).';
+}
+$('chooseFolderBtn').addEventListener('click', async () => {
+  try {
+    outDir = await window.showDirectoryPicker({ mode: 'readwrite' });
+    usedNames.clear(); dirCache.clear();
+    $('folderStatus').textContent = 'Saving straight to "' + outDir.name + '". Nothing is kept in memory and no ZIP is made.';
+    renderUI();
+  } catch (err) {
+    if (err.name !== 'AbortError') $('folderStatus').textContent = 'Folder access is unavailable here. Open the page directly in the browser (not inside an embed).';
+  }
+});
+
+async function getDir(dirs) {
+  let d = outDir, key = '';
+  for (const part of dirs) {
+    key += '/' + part;
+    let h = dirCache.get(key);
+    if (!h) { h = await d.getDirectoryHandle(part, { create: true }); dirCache.set(key, h); }
+    d = h;
+  }
+  return d;
+}
+async function saveToFolder(blob, name, dirs) {
+  const dir = await getDir(dirs);
+  const prefix = dirs.join('/') + '/';
+  const dot = name.lastIndexOf('.');
+  const base = dot > 0 ? name.slice(0, dot) : name, ext = dot > 0 ? name.slice(dot) : '';
+  let finalName = null;
+  for (let i = 1; !finalName; i++) {
+    const cand = i === 1 ? name : `${base}_${i}${ext}`;
+    if (usedNames.has(prefix + cand)) continue;
+    usedNames.add(prefix + cand);                       // reserve first so parallel jobs never collide
+    try { await dir.getFileHandle(cand); }              // exists on disk already: never overwrite
+    catch (e) { if (e.name === 'NotFoundError') finalName = cand; else throw e; }
+  }
+  const fh = await dir.getFileHandle(finalName, { create: true });
+  const w = await fh.createWritable();
+  try { await w.write(blob); await w.close(); }
+  catch (e) { try { await w.abort(); } catch {} throw e; }
+  return finalName;
+}
+
+/* ---------- format support / ffmpeg ---------- */
+async function detectBrowserSupport() {
+  const c = document.createElement('canvas'); c.width = c.height = 2;
+  const ctx = c.getContext('2d'); if (!ctx) return {};
+  ctx.fillStyle = '#f00'; ctx.fillRect(0, 0, 2, 2);
+  const out = {};
+  for (const f of ['webp','avif','jpeg','png','gif','bmp']) {
+    try { out[f] = await new Promise((res) => c.toBlob((b) => res(Boolean(b && b.size && b.type.toLowerCase() === 'image/' + f)), 'image/' + f, .9)); }
+    catch { out[f] = false; }
+  }
+  return out;
+}
+const nativeOk = (f) => Boolean(browserSupport[f]);
+const formatAvailable = (f) => f === 'svg' || f === 'original' || nativeOk(f) || (ffmpegReady && FFMPEG_FORMATS.has(f));
+function populateFormatDropdown(preferred) {
+  const prev = preferred || outputFormat.value;
+  const labels = { webp: 'WebP (Recommended)', jpeg: 'JPEG', png: 'PNG', avif: 'AVIF', gif: 'GIF', bmp: 'BMP', svg: 'SVG (Vector)', original: 'Keep Original' };
+  outputFormat.textContent = '';
+  for (const f of FORMAT_ORDER) {
+    if (!formatAvailable(f)) continue;
+    const o = document.createElement('option'); o.value = f; o.textContent = labels[f]; outputFormat.appendChild(o);
+  }
+  if (prev && [...outputFormat.options].some((o) => o.value === prev)) outputFormat.value = prev;
+  else if (outputFormat.options.length) outputFormat.selectedIndex = 0;
+  svgOptions.classList.toggle('visible', outputFormat.value === 'svg');
+}
+async function ensureFfmpeg() {
+  if (ffmpegReady) return true;
+  if (ffmpegLoadPromise) return ffmpegLoadPromise;
+  ffmpegLoadPromise = (async () => {
+    try {
+      if (typeof FFmpeg === 'undefined' || typeof FFmpeg.createFFmpeg !== 'function') return false;
+      ffmpeg = FFmpeg.createFFmpeg({ log: false });
+      await ffmpeg.load(); ffmpegReady = true; populateFormatDropdown(outputFormat.value); return true;
+    } catch (err) {
+      ffmpegReady = false; ffmpeg = null;
+      console.warn('FFmpeg.wasm unavailable; browser encoders will be used where possible.', err);
+      populateFormatDropdown(outputFormat.value); return false;
+    }
+  })();
+  return ffmpegLoadPromise;
+}
+async function withFfmpegLock(task) {
+  if (!(await ensureFfmpeg())) throw new Error('FFmpeg engine is unavailable in this browser.');
+  if (ffmpegBusy) await new Promise((r) => ffmpegWaiters.push(r));
+  ffmpegBusy = true;
+  try { return await task(); }
+  finally { ffmpegBusy = false; const n = ffmpegWaiters.shift(); if (n) n(); }
+}
+
+/* ---------- decode ---------- */
+const getSvgOptions = () => ({
+  removeMetadata: $('svgRemoveMetadata').checked, removeHidden: $('svgRemoveHidden').checked,
+  minifyPaths: $('svgMinifyPaths').checked, mergeStyles: $('svgMergeStyles').checked,
+  removeUnusedDefs: $('svgRemoveUnusedDefs').checked, shortenIds: $('svgShortenIds').checked
+});
+async function decodeImage(file) {
+  const ext = getExt(file.name);
+  if (isSvgFile(file)) {
+    if (file.size > LIMITS.maxSvgBytes) throw new Error('SVG file is too large.');
+    return decodeSvgText(sanitizeSvg(await file.text(), getSvgOptions()));
+  }
+  if (ext === '.heic' || ext === '.heif' || file.type === 'image/heic' || file.type === 'image/heif') {
+    if (typeof heic2any === 'undefined') throw new Error('HEIC support is not loaded.');
+    const b = await heic2any({ blob: file, toType: 'image/png', quality: 1 });
+    const bmp = await createImageBitmap(Array.isArray(b) ? b[0] : b);
+    assertDimensions(bmp.width, bmp.height); return bmp;
+  }
+  if (ext === '.tiff' || ext === '.tif' || file.type === 'image/tiff') {
+    if (typeof UTIF === 'undefined') throw new Error('TIFF support is not loaded.');
+    const buf = await file.arrayBuffer(), ifds = UTIF.decode(buf);
+    if (!ifds.length) throw new Error('Invalid TIFF file.');
+    UTIF.decodeImage(buf, ifds[0]);
+    const w = Number(ifds[0].width), h = Number(ifds[0].height); assertDimensions(w, h);
+    const rgba = UTIF.toRGBA8(ifds[0]), c = createCanvas(w, h), ctx = c.getContext('2d');
+    if (!ctx) throw new Error('Canvas unavailable.');
+    ctx.putImageData(new ImageData(new Uint8ClampedArray(rgba.buffer), w, h), 0, 0);
+    return createImageBitmap(c);
+  }
+  try { const bmp = await createImageBitmap(file); assertDimensions(bmp.width, bmp.height); return bmp; }
+  catch (e) { if (!ffmpegReady) throw e; return decodeWithFfmpeg(file); }
+}
+async function decodeSvgText(text) {
+  const url = URL.createObjectURL(new Blob([text], { type: 'image/svg+xml' }));
+  try {
+    const img = new Image(); img.src = url; await img.decode();
+    const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height; assertDimensions(w, h);
+    const c = createCanvas(w, h), ctx = c.getContext('2d');
+    if (!ctx) throw new Error('Canvas unavailable.');
+    ctx.drawImage(img, 0, 0, w, h); return await createImageBitmap(c);
+  } finally { URL.revokeObjectURL(url); }
+}
+function decodeWithFfmpeg(file) {
+  return withFfmpegLock(async () => {
+    const inN = 'input_' + newId() + getExt(file.name), outN = 'decoded_' + newId() + '.png';
+    try {
+      ffmpeg.FS('writeFile', inN, await FFmpeg.fetchFile(file));
+      await ffmpeg.run('-i', inN, '-frames:v', '1', '-f', 'image2', '-c:v', 'png', outN);
+      const data = ffmpeg.FS('readFile', outN);
+      const bmp = await createImageBitmap(new Blob([data.buffer], { type: 'image/png' }));
+      assertDimensions(bmp.width, bmp.height); return bmp;
+    } finally { try { ffmpeg.FS('unlink', inN); } catch {} try { ffmpeg.FS('unlink', outN); } catch {} }
+  });
+}
+
+/* ---------- encode ---------- */
+function targetSize(sw, sh, s) {
+  let w = sw, h = sh;
+  if (s.width || s.height) {
+    if (s.width && s.height && s.ratio) { const r = Math.min(s.width / sw, s.height / sh); w = Math.round(sw * r); h = Math.round(sh * r); }
+    else if (s.width && !s.height) { w = s.width; h = Math.round(sh * (s.width / sw)); }
+    else if (s.height && !s.width) { h = s.height; w = Math.round(sw * (s.height / sh)); }
+    else { w = s.width || sw; h = s.height || sh; }
+  }
+  w = Math.min(LIMITS.maxDimension, Math.max(1, Math.round(w)));
+  h = Math.min(LIMITS.maxDimension, Math.max(1, Math.round(h)));
+  assertDimensions(w, h); return { w, h };
+}
+async function encodeCanvas(bmp, mime, s) {
+  const { w, h } = targetSize(bmp.width, bmp.height, s);
+  const c = createCanvas(w, h), ctx = c.getContext('2d', { alpha: true });
+  if (!ctx) throw new Error('Canvas unavailable.');
+  if (mime === 'image/jpeg' || mime === 'image/bmp') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); }
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(bmp, 0, 0, w, h);
+  const q = Math.min(1, Math.max(.01, s.quality / 100));
+  const blob = typeof c.convertToBlob === 'function'
+    ? await c.convertToBlob({ type: mime, quality: q })
+    : await new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('Encoding failed.'))), mime, q));
+  if (!blob || !blob.size) throw new Error('Encoding failed.');
+  if (blob.type && blob.type.toLowerCase() !== mime) throw new Error('Browser did not provide the requested output format.');
+  return blob;
+}
+function scaleFilter(s) {
+  if (!s.width && !s.height) return null;
+  if (s.width && s.height && s.ratio) return `scale=${s.width}:${s.height}:force_original_aspect_ratio=decrease`;
+  if (s.width && !s.height) return `scale=${s.width}:-1`;
+  if (s.height && !s.width) return `scale=-1:${s.height}`;
+  return `scale=${s.width}:${s.height}`;
+}
+function encodeWithFfmpeg(file, format, s) {
+  return withFfmpegLock(async () => {
+    const cfg = FORMAT[format], q = s.quality;
+    const inN = 'input_' + newId() + getExt(file.name), outN = 'output_' + newId() + '.' + cfg.ext;
+    try {
+      ffmpeg.FS('writeFile', inN, await FFmpeg.fetchFile(file));
+      const a = ['-i', inN]; const f = scaleFilter(s); if (f) a.push('-vf', f);
+      if (format === 'avif') a.push('-c:v', 'libaom-av1', '-crf', String(Math.round(50 - ((q - 10) / 90) * 45)), '-cpu-used', '6', '-still-picture', '1', '-frames:v', '1', '-pix_fmt', 'yuv420p');
+      else if (format === 'webp') a.push('-c:v', 'libwebp', '-quality', String(Math.round(q)), '-method', '4', '-frames:v', '1');
+      else if (format === 'jpeg') a.push('-c:v', 'mjpeg', '-q:v', String(Math.max(2, Math.min(31, Math.round(31 - (q / 100) * 29)))), '-frames:v', '1', '-pix_fmt', 'yuvj420p');
+      else if (format === 'png') a.push('-c:v', 'png', '-compression_level', String(Math.min(9, Math.round((100 - q) / 11))), '-frames:v', '1');
+      else if (format === 'gif') a.push('-c:v', 'gif', '-frames:v', '1');
+      else if (format === 'bmp') a.push('-c:v', 'bmp', '-frames:v', '1');
+      a.push('-y', outN);
+      await ffmpeg.run(...a);
+      const blob = new Blob([ffmpeg.FS('readFile', outN).buffer], { type: cfg.mime });
+      if (!blob.size) throw new Error('FFmpeg returned an empty file.');
+      return blob;
+    } finally { try { ffmpeg.FS('unlink', inN); } catch {} try { ffmpeg.FS('unlink', outN); } catch {} }
+  });
+}
+async function encodeRaster(file, bmp, format, s) {
+  const cfg = FORMAT[format]; if (!cfg) throw new Error('Unsupported format.');
+  if (nativeOk(format) && cfg.native) {
+    try { return await encodeCanvas(bmp, cfg.mime, s); } catch (e) { if (!ffmpegReady) throw e; }
+  }
+  if (ffmpegReady && FFMPEG_FORMATS.has(format)) {
+    try { return await encodeWithFfmpeg(file, format, s); }
+    catch (e) { if (nativeOk(format)) return encodeCanvas(bmp, cfg.mime, s); throw e; }
+  }
+  return encodeCanvas(bmp, cfg.mime, s);
+}
+async function optimizeSvg(file) {
+  if (file.size > LIMITS.maxSvgBytes) throw new Error('SVG file is too large.');
+  return new Blob([sanitizeSvg(await file.text(), getSvgOptions())], { type: 'image/svg+xml' });
+}
+async function rasterToSvg(bmp, s) {
+  const t = targetSize(bmp.width, bmp.height, s), c = createCanvas(t.w, t.h), ctx = c.getContext('2d');
+  if (!ctx) throw new Error('Canvas unavailable.');
+  ctx.clearRect(0, 0, t.w, t.h); ctx.drawImage(bmp, 0, 0, t.w, t.h);
+  const png = typeof c.convertToBlob === 'function'
+    ? await c.convertToBlob({ type: 'image/png' })
+    : await new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('PNG encoding failed.'))), 'image/png'));
+  if (!png || !png.size) throw new Error('PNG encoding failed.');
+  const url = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => rej(new Error('Could not read generated image.')); r.readAsDataURL(png); });
+  return new Blob([`<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${t.w}" height="${t.h}" viewBox="0 0 ${t.w} ${t.h}"><image width="${t.w}" height="${t.h}" href="${url}"/></svg>`], { type: 'image/svg+xml' });
+}
+
+/* ---------- SVG sanitizer (allowlist) ---------- */
+const escapeRegExp = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function sanitizeSvg(text, o) {
+  const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
+  if (doc.querySelector('parsererror')) throw new Error('Invalid SVG.');
+  const root = doc.documentElement;
+  if (!root || root.localName.toLowerCase() !== 'svg') throw new Error('SVG root element required.');
+  const okTags = new Set(['svg','g','path','rect','circle','ellipse','line','polyline','polygon','defs','linearGradient','radialGradient','stop','clipPath','mask','pattern','symbol','use','image','title','desc','metadata','style','view','switch']);
+  const badTags = new Set(['script','foreignObject','iframe','object','embed','audio','video','animate','animateMotion','animateTransform','set','feImage','link']);
+  const okAttrs = new Set(['id','class','style','d','fill','fill-rule','fill-opacity','stroke','stroke-width','stroke-linecap','stroke-linejoin','stroke-miterlimit','stroke-opacity','opacity','transform','viewBox','xmlns','xmlns:xlink','x','y','x1','x2','y1','y2','cx','cy','r','rx','ry','width','height','points','preserveAspectRatio','offset','stop-color','stop-opacity','gradientUnits','gradientTransform','spreadMethod','clip-path','clip-rule','mask','patternUnits','patternContentUnits','patternTransform','href','xlink:href','role','aria-label']);
+  const remove = [];
+  for (const el of [root, ...root.querySelectorAll('*')]) {
+    const tag = el.localName;
+    if (!okTags.has(tag) || badTags.has(tag)) { if (el !== root) remove.push(el); continue; }
+    for (const attr of [...el.attributes]) {
+      const n = attr.name, v = attr.value.trim(), lo = n.toLowerCase();
+      const bad = lo.startsWith('on') || /javascript\s*:|vbscript\s*:|text\/html/i.test(v) || /url\s*\(\s*(https?:|\/\/|javascript:)/i.test(v);
+      if (!(okAttrs.has(n) || okAttrs.has(lo)) || bad) { el.removeAttribute(n); continue; }
+      if ((lo === 'href' || lo === 'xlink:href') && !(v.startsWith('#') || /^data:image\/(png|jpe?g|gif|webp|avif);base64,/i.test(v))) el.removeAttribute(n);
+      if (lo === 'style' && /@import|url\s*\(|expression\s*\(/i.test(v)) el.removeAttribute(n);
+      if (o.removeHidden && /(?:^|;)\s*(display\s*:\s*none|visibility\s*:\s*hidden|opacity\s*:\s*0)\s*(?:;|$)/i.test(v)) remove.push(el);
+    }
+    if (tag === 'style') el.textContent = el.textContent.replace(/@import[^;]+;/gi, '').replace(/url\s*\(\s*[^)]*\)/gi, '');
+    if (o.removeMetadata && ['metadata','title','desc'].includes(tag)) remove.push(el);
+  }
+  for (const el of remove) if (el && el !== root && el.parentNode) el.parentNode.removeChild(el);
+  if (o.removeUnusedDefs) {
+    const ser = new XMLSerializer();
+    for (const defs of [...root.querySelectorAll('defs')]) {
+      const ids = [...defs.querySelectorAll('[id]')].map((e) => e.getAttribute('id')).filter(Boolean);
+      if (!ids.length) continue;
+      const rest = ser.serializeToString(root).replace(ser.serializeToString(defs), '');
+      const unused = ids.every((id) => { const s = escapeRegExp(id); return !new RegExp(`url\\(#${s}\\)|(?:href|xlink:href)=["']#${s}["']`).test(rest); });
+      if (unused && defs.parentNode) defs.parentNode.removeChild(defs);
+    }
+  }
+  if (o.shortenIds) {
+    const map = new Map(); let k = 0;
+    for (const el of root.querySelectorAll('[id]')) { const nid = 'a' + k++; map.set(el.getAttribute('id'), nid); el.setAttribute('id', nid); }
+    for (const el of [root, ...root.querySelectorAll('*')]) for (const attr of [...el.attributes]) {
+      let val = attr.value;
+      for (const [a, b] of map) val = val.split(`url(#${a})`).join(`url(#${b})`).split(`#${a}`).join(`#${b}`);
+      el.setAttribute(attr.name, val);
+    }
+  }
+  if (o.minifyPaths) for (const el of root.querySelectorAll('path')) { const d = el.getAttribute('d'); if (d) el.setAttribute('d', d.replace(/\s+/g, ' ').replace(/\s*([,;:])\s*/g, '$1').trim()); }
+  if (o.mergeStyles) {
+    const styles = [...root.querySelectorAll('style')].map((s) => s.textContent.replace(/@import[^;]+;/gi, '').replace(/url\s*\([^)]*\)/gi, '').trim()).filter(Boolean);
+    for (const s of [...root.querySelectorAll('style')]) s.remove();
+    if (styles.length) { const st = doc.createElement('style'); st.textContent = styles.join('\n'); root.insertBefore(st, root.firstChild); }
+  }
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(root);
+}
+
+/* ---------- queue ---------- */
+const statusGroup = (s) => (s === 'queued' ? 'queued' : s === 'processing' ? 'processing' : s === 'failed' ? 'failed' : ['completed','fallback','svg-optimized'].includes(s) ? 'done' : null);
+const STATUS_LABEL = { queued: 'Queued', processing: 'Processing', completed: 'Completed', failed: 'Error', fallback: 'Original Kept', 'svg-optimized': 'SVG Optimized' };
+
+function renderUI() {
+  $('activeCount').textContent = counts.processing;
+  $('queueCount').textContent = counts.queued;
+  $('completedCount').textContent = counts.done;
+  $('failedCount').textContent = counts.failed;
+  const any = total > 0;
+  filesSection.style.display = any ? 'block' : 'none';
+  statsBar.style.display = any ? 'flex' : 'none';
+  zipBtn.style.display = (!outDir && items.length) ? 'inline-block' : 'none';
+  $('rowNote').textContent = total > MAX_ROWS ? `(showing latest ${MAX_ROWS} of ${total.toLocaleString()})` : '';
+}
+function setStatus(f, status, label) {
+  const p = statusGroup(f.status); if (p) counts[p]--;
+  f.status = status;
+  const n = statusGroup(status); if (n) counts[n]++;
+  if (!f.row) return;
+  f.row.className = 'file-item ' + status;
+  const b = f.row.querySelector('.badge');
+  b.className = 'badge badge-' + status;
+  b.textContent = label || STATUS_LABEL[status] || status;
+}
+function createRow(f) {
+  const div = document.createElement('div'); div.className = 'file-item queued'; div._f = f;
+  const info = document.createElement('div'); info.className = 'file-info';
+  const nm = document.createElement('div'); nm.className = 'file-name'; nm.textContent = f.dirs.concat(f.name).join('/');
+  const meta = document.createElement('div'); meta.className = 'file-meta';
+  const o = document.createElement('span'); o.textContent = 'Original: ' + formatFileSize(f.size);
+  const b = document.createElement('span'); b.className = 'badge badge-queued'; b.textContent = 'Queued';
+  meta.append(o, b); info.append(nm, meta);
+  const act = document.createElement('div'); act.className = 'file-actions';
+  div.append(info, act); return div;
+}
+function ensureRow(f) {
+  if (f.row) return;
+  f.row = createRow(f);
+  fileList.insertBefore(f.row, fileList.firstChild);
+  while (fileList.children.length > MAX_ROWS) { const last = fileList.lastElementChild; if (last._f) last._f.row = null; last.remove(); }
+}
+function updateDetails(f) {
+  if (!f.row) return;
+  const meta = f.row.querySelector('.file-meta'), act = f.row.querySelector('.file-actions');
+  const old = meta.querySelector('.size-reduction'); if (old) old.remove();
+  const sp = document.createElement('span'); sp.className = 'size-reduction' + (f.kept ? '' : ' good'); sp.style.fontWeight = '600';
+  sp.textContent = f.kept
+    ? formatFileSize(f.size) + ' (Original kept: conversion would be larger)'
+    : formatFileSize(f.size) + ' → ' + formatFileSize(f.newSize) + ' (-' + Math.max(0, Math.round((1 - f.newSize / f.size) * 100)) + '%)';
+  meta.appendChild(sp);
+  act.textContent = '';
+  if (f.url) {
+    const a = document.createElement('a'); a.href = f.url; a.download = sanitizeFilename(f.outName);
+    a.className = 'action-btn'; a.textContent = 'Download'; a.rel = 'noopener noreferrer'; act.appendChild(a);
+  } else if (f.savedName) {
+    const s = document.createElement('span'); s.className = 'file-meta'; s.textContent = 'Saved as ' + f.savedName; act.appendChild(s);
+  }
+}
+
+function handleFiles(list) {
+  const cap = outDir ? LIMITS.maxFilesFolder : LIMITS.maxFilesMemory;
+  let skippedCap = 0, skippedType = 0, skippedSize = 0;
+  for (const file of Array.from(list || [])) {
+    const ext = getExt(file.name);
+    if (!(ALLOWED_EXT.has(ext) || (file.type && ALLOWED_MIME.has(file.type.toLowerCase())))) { skippedType++; continue; }
+    if (file.size > LIMITS.maxFileBytes || (isSvgFile(file) && file.size > LIMITS.maxSvgBytes)) { skippedSize++; continue; }
+    if (total >= cap) { skippedCap++; continue; }
+    const rel = file.webkitRelativePath ? file.webkitRelativePath.split('/') : [];
+    const f = {
+      id: newId(), file, name: sanitizeFilename(file.name), size: file.size, status: 'queued',
+      dirs: rel.length > 2 ? rel.slice(1, -1).map(sanitizeFilename) : [],   // keep sub-folder structure (drops the picked root folder's name)
+      blob: null, url: null, outName: '', newSize: 0, kept: false, savedName: '', row: null
+    };
+    total++; counts.queued++; queue.push(f);
+    if (!outDir) items.push(f);
+  }
+  const msg = [];
+  if (skippedCap) msg.push(`${skippedCap.toLocaleString()} skipped: limit of ${cap.toLocaleString()} files reached.`);
+  if (skippedSize) msg.push(`${skippedSize.toLocaleString()} skipped: file too large.`);
+  if (skippedType) msg.push(`${skippedType.toLocaleString()} skipped: unsupported type.`);
+  $('notice').textContent = msg.join(' ');
+  renderUI(); pump();
+}
+function pump() {
+  while (active < LIMITS.concurrency && qHead < queue.length) {
+    const f = queue[qHead++];
+    if (f.status !== 'queued') continue;
+    active++;
+    processFile(f, getSettings())
+      .catch((e) => console.error('Processing error:', e))
+      .finally(() => { active--; pump(); });
+  }
+  if (active === 0 && qHead >= queue.length) { queue.length = 0; qHead = 0; }
+  renderUI();
+}
+
+async function processFile(f, s) {
+  ensureRow(f); setStatus(f, 'processing'); renderUI();
+  let bmp = null;
+  try {
+    const file = f.file, svg = isSvgFile(file);
+    let blob, ext = s.format;
+    if (s.format === 'original') {
+      if (svg) { blob = file; ext = 'svg'; }
+      else if (s.width || s.height) { bmp = await decodeImage(file); blob = await encodeRaster(file, bmp, 'png', s); ext = 'png'; }
+      else { blob = file; ext = getExt(f.name).slice(1) || 'bin'; }
+    } else if (s.format === 'svg') {
+      if (svg) blob = await optimizeSvg(file); else { bmp = await decodeImage(file); blob = await rasterToSvg(bmp, s); }
+      ext = 'svg';
+    } else {
+      bmp = await decodeImage(file); blob = await encodeRaster(file, bmp, s.format, s); ext = FORMAT[s.format].ext;
+    }
+    if (!blob || !blob.size) throw new Error('Conversion failed.');
+
+    const keep = s.format !== 'original' && blob.size >= f.size;   // never output a bigger file than the input
+    const out = keep ? file : blob;
+    f.kept = keep; f.newSize = out.size;
+    f.outName = keep ? f.name : `${f.name.replace(/\.[^/.]+$/, '')}_aznur.${ext}`;
+
+    if (outDir) {
+      f.savedName = await saveToFolder(out, f.outName, f.dirs);   // straight to disk; nothing retained in RAM
+    } else {
+      if (heldBytes + out.size > LIMITS.maxMemoryOutput) throw new Error('MEMORY_FULL');
+      heldBytes += out.size; f.blob = out; f.url = URL.createObjectURL(out);
+    }
+    setStatus(f, keep ? 'fallback' : (s.format === 'svg' && svg ? 'svg-optimized' : 'completed'));
+    updateDetails(f); recordConversion(f.size, f.newSize);
+  } catch (err) {
+    if (err && err.message === 'MEMORY_FULL') {
+      setStatus(f, 'failed', 'Memory full: use a folder');
+      $('notice').textContent = 'Memory limit reached. Choose an output folder to keep going.';
+    } else { console.error('Error processing', f.name, err); setStatus(f, 'failed', 'Error'); }
+  } finally {
+    if (bmp && typeof bmp.close === 'function') bmp.close();
+    if (outDir) f.file = null;          // folder mode: release the input reference too
+    renderUI();
+  }
+}
+
+$('clearBtn').addEventListener('click', () => {
+  if (counts.queued || counts.processing) return;
+  for (const f of items) if (f.url) { try { URL.revokeObjectURL(f.url); } catch {} }
+  items.length = 0; heldBytes = 0; total = 0;
+  counts.queued = counts.processing = counts.done = counts.failed = 0;
+  usedNames.clear(); fileList.textContent = ''; $('notice').textContent = '';
+  renderUI();
+});
+
+/* ---------- ZIP (memory mode only) ---------- */
+async function downloadAllAsZip() {
+  const done = items.filter((f) => ['completed','fallback','svg-optimized'].includes(f.status) && f.blob);
+  if (!done.length) return;
+  zipBtn.disabled = true; zipBtn.textContent = 'Zipping...';
+  try {
+    if (typeof JSZip === 'undefined' || typeof saveAs !== 'function') throw new Error('ZIP library is unavailable.');
+    const zip = new JSZip(), seen = new Set();
+    for (const f of done) {
+      const dir = f.dirs.length ? f.dirs.join('/') + '/' : '';
+      let name = sanitizeFilename(f.outName).replace(/\.\./g, '_');
+      if (seen.has(dir + name)) {
+        const dot = name.lastIndexOf('.'), base = dot > 0 ? name.slice(0, dot) : name, ext = dot > 0 ? name.slice(dot) : '';
+        let i = 2; while (seen.has(`${dir}${base}_${i}${ext}`)) i++;
+        name = `${base}_${i}${ext}`;
+      }
+      seen.add(dir + name); zip.file(dir + name, f.blob);
+    }
+    saveAs(await zip.generateAsync({ type: 'blob', compression: 'STORE' }), 'aznur_compressed_images.zip');
+    zipBtn.textContent = 'Download All as ZIP';
+  } catch (err) {
+    console.error('ZIP creation failed:', err);
+    zipBtn.textContent = 'ZIP Failed';
+    setTimeout(() => { zipBtn.textContent = 'Download All as ZIP'; }, 1500);
+  } finally { zipBtn.disabled = false; }
+}
+
+window.addEventListener('pagehide', () => {
+  for (const f of items) if (f.url) { try { URL.revokeObjectURL(f.url); } catch {} }
+  if (ffmpegReady && ffmpeg) { try { ffmpeg.exit(); } catch {} }
+}, { once: true });
+
+(async () => {
+  browserSupport = await detectBrowserSupport();
+  populateFormatDropdown();
+  ensureFfmpeg().catch(() => {});
+})();
+})();
+</script>
+</body>
+</html>
