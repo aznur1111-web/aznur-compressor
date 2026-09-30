@@ -722,7 +722,7 @@ async function processFile(f, s) {
     const keep = s.format !== 'original' && blob.size >= f.size;   // never output a bigger file than the input
     const out = keep ? file : blob;
     f.kept = keep; f.newSize = out.size;
-    f.outName = keep ? f.name : `${f.name.replace(/\.[^/.]+$/, '')}_aznur.${ext}`;
+    f.outName = keep ? f.name : `${f.name.replace(/\.[^/.]+$/, '')}.${ext}`;
 
     if (outDir) {
       f.savedName = await saveToFolder(out, f.outName, f.dirs);   // straight to disk; nothing retained in RAM
