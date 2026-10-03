@@ -1,121 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-J2ZGTK9Z2P"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-J2ZGTK9Z2P');
+window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
+gtag('js',new Date());gtag('config','G-J2ZGTK9Z2P');
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Aznur Image Compressor</title>
 <meta name="description" content="Compress and convert images between many formats. Output never exceeds input size. Fast, secure, private.">
 <meta name="referrer" content="no-referrer">
-
-<!-- Google Analytics 4 (Replace G-XXXXXXXXXX with your actual Measurement ID) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-XXXXXXXXXX');
-</script>
-
 <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <style>
-:root{--bg:#fafafa;--surface:#fff;--border:#e7e5e4;--text:#1c1917;--muted:#57534e;--accent:#f59e0b;--accent-h:#d97706;--ok:#10b981;--err:#ef4444;--info:#3b82f6;--svg:#8b5cf6;--r:8px;--rl:12px;--sh:0 1px 2px rgba(0,0,0,.05)}
+:root{--bg:#fafafa;--surface:#fff;--border:#e7e5e4;--text:#1c1917;--muted:#57534e;--accent:#f59e0b;--accent-h:#d97706;--ok:#10b981;--err:#ef4444;--info:#3b82f6;--svg:#8b5cf6;--r:6px;--rl:10px}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.5}
-.container{max-width:900px;margin:0 auto;padding:40px 20px}
-header{text-align:center;margin-bottom:40px}
-h1{font-size:2.5rem;font-weight:700;margin-bottom:10px}
-.subtitle{font-size:1.1rem;color:var(--muted);max-width:600px;margin:0 auto}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:24px;margin-bottom:24px;box-shadow:var(--sh)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px}
-.fg{display:flex;flex-direction:column;gap:8px}
-label{font-size:.85rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-select,input[type=number],input[type=range]{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r);font-size:1rem;background:#fff}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.45;font-size:14px}
+.container{max-width:760px;margin:0 auto;padding:24px 16px}
+header{text-align:center;margin-bottom:20px}
+h1{font-size:1.7rem;font-weight:700;margin-bottom:4px}
+.subtitle{font-size:.9rem;color:var(--muted);max-width:520px;margin:0 auto}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:16px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+.fg{display:flex;flex-direction:column;gap:6px}
+label{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+select,input[type=number]{width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:var(--r);font-size:.9rem;background:#fff}
 select:focus,input:focus{outline:none;border-color:var(--accent)}
-.qv{font-weight:700;color:var(--accent)}
-.row{display:flex;align-items:center;gap:10px}
-.cb{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:.9rem;color:var(--muted)}
+.qv{font-weight:700;color:var(--accent);text-transform:none;letter-spacing:0}
+.lbl{display:flex;justify-content:space-between;align-items:center}
+.row{display:flex;align-items:center;gap:8px}
+.cb{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:.82rem;color:var(--muted)}
 .cb input{width:auto}
-.svg-opts{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:none}
+.cb label{text-transform:none;font-weight:500;font-size:.8rem;letter-spacing:0}
+.help{font-size:.72rem;color:var(--muted);line-height:1.35}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:999px;background:var(--border);outline:none;cursor:pointer;padding:0;border:0;margin:6px 0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.svg-opts{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:none}
 .svg-opts.visible{display:block}
-.svg-opts label{font-size:.8rem;text-transform:none;font-weight:500}
-#folderStatus,#notice{font-size:.85rem;color:var(--muted)}
-#notice{margin-bottom:12px;min-height:1.2em}
-.upload-zone{background:var(--surface);border:2px dashed var(--border);border-radius:var(--rl);padding:60px 20px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:20px;user-select:none}
+.save-row{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#folderStatus,#notice{font-size:.78rem;color:var(--muted)}
+#notice{margin-bottom:10px;min-height:1em}
+.upload-zone{background:var(--surface);border:2px dashed var(--border);border-radius:var(--rl);padding:28px 16px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px;user-select:none}
 .upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:#fffbeb}
-.upload-icon{font-size:3rem;margin-bottom:15px}
-.btn{background:var(--text);color:#fff;padding:12px 30px;border-radius:var(--r);font-weight:600;border:none;cursor:pointer;font-size:1rem;margin-top:10px}
+.upload-zone h2{font-size:1.05rem}
+.upload-icon{font-size:1.9rem;margin-bottom:6px}
+.btn{background:var(--text);color:#fff;padding:8px 18px;border-radius:var(--r);font-weight:600;border:none;cursor:pointer;font-size:.88rem;margin-top:8px}
 .btn:hover{background:#333}
-.btn.secondary{background:transparent;color:var(--text);border:1px solid var(--border);margin-left:8px}
+.btn.secondary{background:transparent;color:var(--text);border:1px solid var(--border);margin-left:6px}
 .btn.secondary:hover{background:var(--bg)}
 .hidden{display:none}
-.stats-bar{display:none;justify-content:space-between;flex-wrap:wrap;gap:8px;background:var(--surface);padding:15px 20px;border-radius:var(--r);border:1px solid var(--border);margin-bottom:20px;font-size:.9rem;color:var(--muted)}
-.stat-item{display:flex;gap:5px}
-.stat-item b{color:var(--text)}
+.stats-bar{display:none;justify-content:space-between;flex-wrap:wrap;gap:6px;background:var(--surface);padding:9px 14px;border-radius:var(--r);border:1px solid var(--border);margin-bottom:14px;font-size:.82rem;color:var(--muted)}
+.stat-item{display:flex;gap:4px}.stat-item b{color:var(--text)}
 .files-section{display:none}
-.sec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
-.sec-title{font-size:1.25rem;font-weight:700}
-.zip-btn{background:var(--accent);color:#fff;padding:8px 16px;border-radius:var(--r);font-weight:600;border:none;cursor:pointer;display:none}
-.zip-btn:hover{background:var(--accent-h)}
-.zip-btn:disabled{opacity:.6;cursor:not-allowed}
-.file-list{display:flex;flex-direction:column;gap:10px}
-.file-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:15px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
-.file-item.processing{border-left:4px solid var(--accent)}
-.file-item.completed{border-left:4px solid var(--ok)}
-.file-item.failed{border-left:4px solid var(--err)}
-.file-item.fallback{border-left:4px solid var(--info)}
-.file-item.svg-optimized{border-left:4px solid var(--svg)}
-.file-info{flex:1;min-width:200px}
-.file-name{font-weight:600;margin-bottom:4px;word-break:break-all}
-.file-meta{font-size:.85rem;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.badge{padding:2px 8px;border-radius:4px;font-size:.75rem;font-weight:700;text-transform:uppercase}
-.badge-queued{background:#fef3c7;color:#92400e}
-.badge-processing{background:#ffedd5;color:#9a3412}
-.badge-completed{background:#d1fae5;color:#065f46}
-.badge-failed{background:#fee2e2;color:#991b1b}
-.badge-fallback{background:#dbeafe;color:#1e40af}
-.badge-svg-optimized{background:#ede9fe;color:#5b21b6}
-.action-btn{background:transparent;border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:4px;font-size:.85rem;cursor:pointer;text-decoration:none;font-weight:600}
-.action-btn:hover{background:var(--bg)}
-.action-btn:disabled{opacity:.6;cursor:not-allowed}
+.sec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.sec-title{font-size:1.05rem;font-weight:700}
+.zip-btn{background:var(--accent);color:#fff;padding:6px 12px;border-radius:var(--r);font-weight:600;border:none;cursor:pointer;display:none;font-size:.82rem}
+.zip-btn:hover{background:var(--accent-h)}.zip-btn:disabled{opacity:.6;cursor:not-allowed}
+.file-list{display:flex;flex-direction:column;gap:6px}
+.file-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:9px 12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.file-item.processing{border-left:3px solid var(--accent)}.file-item.completed{border-left:3px solid var(--ok)}
+.file-item.failed{border-left:3px solid var(--err)}.file-item.fallback{border-left:3px solid var(--info)}
+.file-item.svg-optimized{border-left:3px solid var(--svg)}
+.file-info{flex:1;min-width:180px}
+.file-name{font-weight:600;font-size:.88rem;margin-bottom:2px;word-break:break-all}
+.file-meta{font-size:.78rem;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.badge{padding:1px 6px;border-radius:4px;font-size:.68rem;font-weight:700;text-transform:uppercase}
+.badge-queued{background:#fef3c7;color:#92400e}.badge-processing{background:#ffedd5;color:#9a3412}
+.badge-completed{background:#d1fae5;color:#065f46}.badge-failed{background:#fee2e2;color:#991b1b}
+.badge-fallback{background:#dbeafe;color:#1e40af}.badge-svg-optimized{background:#ede9fe;color:#5b21b6}
+.action-btn{background:transparent;border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:4px;font-size:.78rem;cursor:pointer;text-decoration:none;font-weight:600}
+.action-btn:hover{background:var(--bg)}.action-btn:disabled{opacity:.6;cursor:not-allowed}
 .good{font-weight:600;color:var(--ok)}
-.stats-group+.stats-group{margin-top:24px}
-.stats-label{font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
-.stat-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:24px 20px;text-align:center}
-.stat-card .l{font-size:.8rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
-.stat-card .v{font-size:1.75rem;font-weight:700}
-footer{margin-top:50px;text-align:center;color:var(--muted);font-size:.85rem;padding-top:20px;border-top:1px solid var(--border)}
-@media(max-width:600px){.upload-zone{padding:40px 20px}h1{font-size:2rem}.btn.secondary{margin-left:0}}
+.stats-group+.stats-group{margin-top:14px}
+.stats-label{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.stat-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:10px;text-align:center}
+.stat-card .l{font-size:.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.stat-card .v{font-size:1.2rem;font-weight:700}
+footer{margin-top:28px;text-align:center;color:var(--muted);font-size:.78rem;padding-top:14px;border-top:1px solid var(--border)}
+@media(max-width:600px){h1{font-size:1.45rem}.btn.secondary{margin-left:0}}
 </style>
 </head>
-  
-
-  
 <body>
 <div class="container">
 <header>
   <h1>Aznur Image Compressor</h1>
-  <p class="subtitle">Professional-grade image &amp; SVG optimization directly in your browser. Your images are processed locally on your device.</p>
+  <p class="subtitle">Image &amp; SVG optimization directly in your browser. Your images never leave your device.</p>
 </header>
 
-<div class="card"><div class="grid">
-  <div class="fg">
-    <label for="outputFormat">Output Format</label>
-    <select id="outputFormat"></select>
-    <div class="svg-opts" id="svgOptions">
-      <label style="margin-bottom:8px;display:block">SVG Optimization Options</label>
+<div class="card">
+  <div class="grid">
+    <div class="fg">
+      <label for="outputFormat">Output Format</label>
+      <select id="outputFormat"></select>
+    </div>
+    <div class="fg">
+      <div class="lbl"><label for="qualityLevel">Quality</label><span id="qualityValue" class="qv">80%</span></div>
+      <input type="range" id="qualityLevel" min="10" max="100" value="80">
+    </div>
+    <div class="fg">
+      <div class="lbl"><label for="workers">CPU Workers</label><span id="workersValue" class="qv">1 / 1</span></div>
+      <input type="range" id="workers" min="1" max="1" step="1" value="1">
+      <div class="help" id="workersHelp"></div>
+    </div>
+    <div class="fg">
+      <label>Resize (px)</label>
+      <div class="row"><input type="number" id="resizeWidth" placeholder="Width" min="1"><span>×</span><input type="number" id="resizeHeight" placeholder="Height" min="1"></div>
+      <div class="cb"><input type="checkbox" id="lockRatio" checked><label for="lockRatio">Maintain aspect ratio</label></div>
+    </div>
+  </div>
+  <div class="svg-opts" id="svgOptions">
+    <label style="display:block;margin-bottom:4px">SVG Optimization Options</label>
+    <div class="grid" style="gap:0 14px">
       <div class="cb"><input type="checkbox" id="svgRemoveMetadata" checked><label for="svgRemoveMetadata">Remove metadata &amp; comments</label></div>
       <div class="cb"><input type="checkbox" id="svgRemoveHidden" checked><label for="svgRemoveHidden">Remove hidden elements</label></div>
       <div class="cb"><input type="checkbox" id="svgMinifyPaths" checked><label for="svgMinifyPaths">Minify path data</label></div>
@@ -124,34 +124,18 @@ footer{margin-top:50px;text-align:center;color:var(--muted);font-size:.85rem;pad
       <div class="cb"><input type="checkbox" id="svgShortenIds"><label for="svgShortenIds">Shorten IDs</label></div>
     </div>
   </div>
-  <div class="fg">
-    <label for="qualityLevel">Quality: <span id="qualityValue" class="qv">80%</span></label>
-    <input type="range" id="qualityLevel" min="10" max="100" value="80">
-  </div>
-  <div class="fg">
-    <label>Resize Dimensions (px)</label>
-    <div class="row"><input type="number" id="resizeWidth" placeholder="Width" min="1"><span>x</span><input type="number" id="resizeHeight" placeholder="Height" min="1"></div>
-    <div class="cb"><input type="checkbox" id="lockRatio" checked><label for="lockRatio" style="font-size:.9rem;text-transform:none">Maintain Aspect Ratio</label></div>
-  </div>
-</div></div>
-
-<div class="card">
-  <div class="fg">
-    <label>Save Location</label>
-    <div class="row" style="flex-wrap:wrap;gap:12px">
-      <button class="action-btn" id="chooseFolderBtn" type="button">Choose output folder</button>
-      <span id="folderStatus">No folder chosen. Results stay in memory (up to 500 MB, then download as ZIP).</span>
-    </div>
+  <div class="save-row">
+    <button class="action-btn" id="chooseFolderBtn" type="button">Choose output folder</button>
+    <span id="folderStatus">No folder chosen. Results stay in memory (up to 500 MB, then download as ZIP).</span>
   </div>
 </div>
 
 <div class="upload-zone" id="dropZone">
   <div class="upload-icon">📁</div>
   <h2>Drop images here</h2>
-  <p style="color:var(--muted);margin-bottom:15px">or click to browse files (supports raster images &amp; SVG)</p>
-  <p style="color:var(--muted);font-size:.9rem;margin-bottom:15px">Supports: JPG, PNG, WebP, AVIF, GIF, BMP, SVG, HEIC, TIFF, ICO, and more</p>
+  <p style="color:var(--muted);font-size:.82rem">or click to browse · JPG, PNG, WebP, AVIF, GIF, BMP, SVG, HEIC, TIFF, ICO</p>
   <button class="btn" id="uploadBtn" type="button">Select Images</button>
-  <button class="btn secondary" id="pickFolderBtn" type="button">Select a Folder of Images</button>
+  <button class="btn secondary" id="pickFolderBtn" type="button">Select a Folder</button>
   <input type="file" id="fileInput" class="hidden" multiple accept="image/*,.svg,.heic,.heif,.tiff,.tif,.ico">
   <input type="file" id="folderInput" class="hidden" webkitdirectory multiple>
 </div>
@@ -166,8 +150,8 @@ footer{margin-top:50px;text-align:center;color:var(--muted);font-size:.85rem;pad
 
 <div class="files-section" id="filesSection">
   <div class="sec-head">
-    <h3 class="sec-title">Your Files <small id="rowNote" style="font-weight:400;color:var(--muted);font-size:.8rem"></small></h3>
-    <div style="display:flex;gap:8px">
+    <h3 class="sec-title">Your Files <small id="rowNote" style="font-weight:400;color:var(--muted);font-size:.75rem"></small></h3>
+    <div style="display:flex;gap:6px">
       <button class="action-btn" id="clearBtn" type="button">Clear list</button>
       <button class="zip-btn" id="downloadAllBtn" type="button">Download All as ZIP</button>
     </div>
@@ -175,18 +159,17 @@ footer{margin-top:50px;text-align:center;color:var(--muted);font-size:.85rem;pad
   <div class="file-list" id="fileList"></div>
 </div>
 
-<div class="card" style="margin-top:40px" aria-label="Conversion statistics">
-  <h3 style="font-size:1.1rem;margin-bottom:4px">Conversion Statistics</h3>
-  <p style="font-size:.85rem;color:var(--muted);margin-bottom:20px">Your images are never uploaded.</p>
+<div class="card" style="margin-top:24px">
+  <h3 style="font-size:.95rem;margin-bottom:10px">Conversion Statistics</h3>
   <div class="stats-group">
-    <div class="stats-label"><span>This Session</span><button class="action-btn" id="statsResetBtn" type="button">Reset Session</button></div>
+    <div class="stats-label"><span>This Session</span><button class="action-btn" id="statsResetBtn" type="button">Reset</button></div>
     <div class="grid">
       <div class="stat-card"><div class="l">Images Converted</div><div class="v" id="sessionConverted">0</div></div>
       <div class="stat-card"><div class="l">Space Saved</div><div class="v" id="sessionSaved">0 Bytes</div></div>
     </div>
   </div>
   <div class="stats-group">
-    <div class="stats-label"><span id="globalLabel">All Time (This Browser)</span></div>
+    <div class="stats-label"><span>All Time (This Browser)</span></div>
     <div class="grid">
       <div class="stat-card"><div class="l">Images Converted</div><div class="v" id="globalConverted">-</div></div>
       <div class="stat-card"><div class="l">Space Saved</div><div class="v" id="globalSaved">-</div></div>
@@ -196,7 +179,6 @@ footer{margin-top:50px;text-align:center;color:var(--muted);font-size:.85rem;pad
 
 <footer>
   <p>&copy; Aznur Image Compressor. Images are processed locally in your browser and are not uploaded to any server.</p>
-  <p style="margin-top:8px;font-size:.8rem">Supports: JPG, PNG, WebP, AVIF, GIF, BMP, SVG, HEIC, HEIF, TIFF, ICO, and more</p>
 </footer>
 </div>
 
@@ -204,22 +186,11 @@ footer{margin-top:50px;text-align:center;color:var(--muted);font-size:.85rem;pad
 (() => {
 'use strict';
 
-// NOTE: For a live "All Users" counter on the website, you need a lightweight backend 
-// (like Cloudflare KV, Firebase, or Supabase). Google Analytics is for tracking, 
-// not for reading live totals back to the frontend.
-
 const LIMITS = Object.freeze({
-  maxFilesMemory: 10000,
-  maxFilesFolder: 50000,
-  maxMemoryOutput: 500 * 1024 * 1024,
-  maxFileBytes: 25 * 1024 * 1024,
-  maxDimension: 8000,
-  maxPixels: 64_000_000,
-  maxSvgBytes: 5 * 1024 * 1024,
-  concurrency: Math.min(3, Math.max(1, navigator.hardwareConcurrency || 4))
+  maxFilesMemory: 10000, maxFilesFolder: 50000, maxMemoryOutput: 500 * 1024 * 1024,
+  maxFileBytes: 25 * 1024 * 1024, maxDimension: 8000, maxPixels: 64_000_000, maxSvgBytes: 5 * 1024 * 1024
 });
 const MAX_ROWS = 50;
-
 const FORMAT = Object.freeze({
   webp: { mime: 'image/webp', ext: 'webp', native: true },
   jpeg: { mime: 'image/jpeg', ext: 'jpeg', native: true },
@@ -240,14 +211,10 @@ const fileList = $('fileList'), filesSection = $('filesSection'), statsBar = $('
 const zipBtn = $('downloadAllBtn'), outputFormat = $('outputFormat'), svgOptions = $('svgOptions');
 
 /* ---------- state ---------- */
-let outDir = null;
-let heldBytes = 0;
-let total = 0;
-const items = [];
-const queue = []; let qHead = 0; let active = 0;
+let outDir = null, heldBytes = 0, total = 0;
+const items = [], queue = []; let qHead = 0, active = 0;
 const counts = { queued: 0, processing: 0, done: 0, failed: 0 };
-const usedNames = new Set();
-const dirCache = new Map();
+const usedNames = new Set(), dirCache = new Map();
 let browserSupport = {}, ffmpeg = null, ffmpegReady = false, ffmpegLoadPromise = null, ffmpegBusy = false;
 const ffmpegWaiters = [];
 
@@ -272,14 +239,34 @@ function createCanvas(w, h) {
   const c = document.createElement('canvas'); c.width = w; c.height = h; return c;
 }
 const getSettings = () => ({
-  format: outputFormat.value,
-  quality: Number($('qualityLevel').value),
-  width: Number($('resizeWidth').value) || 0,
-  height: Number($('resizeHeight').value) || 0,
+  format: outputFormat.value, quality: Number($('qualityLevel').value),
+  width: Number($('resizeWidth').value) || 0, height: Number($('resizeHeight').value) || 0,
   ratio: $('lockRatio').checked
 });
 
-/* ---------- statistics (session + all time) ---------- */
+/* ---------- CPU workers slider ---------- */
+const WORKERS_KEY = 'aznurImageCompressorWorkers_v1';
+const maxCores = Math.max(1, Number(navigator.hardwareConcurrency) || 4);
+const workersEl = $('workers');
+const getWorkers = () => Math.min(maxCores, Math.max(1, parseInt(workersEl.value, 10) || 1));
+function paintWorkers() {
+  const v = getWorkers();
+  $('workersValue').textContent = v + ' / ' + maxCores;
+  const pct = maxCores > 1 ? ((v - 1) / (maxCores - 1)) * 100 : 100;
+  workersEl.style.background = `linear-gradient(to right, var(--accent) ${pct}%, var(--border) ${pct}%)`;
+}
+(function initWorkers() {
+  let saved = NaN;
+  try { saved = parseInt(localStorage.getItem(WORKERS_KEY), 10); } catch {}
+  workersEl.min = 1; workersEl.max = maxCores;
+  workersEl.value = String(saved >= 1 && saved <= maxCores ? saved : Math.min(3, maxCores));
+  $('workersHelp').textContent = `Browser reports ${maxCores} logical CPU thread(s). Images processed at the same time.`;
+  workersEl.addEventListener('input', () => { paintWorkers(); pump(); });
+  workersEl.addEventListener('change', () => { try { localStorage.setItem(WORKERS_KEY, workersEl.value); } catch {} });
+  paintWorkers();
+})();
+
+/* ---------- statistics ---------- */
 const LOCAL_KEY = 'aznurImageCompressorStats_v1';
 const num = (v) => (Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
 function loadLocal() {
@@ -287,40 +274,21 @@ function loadLocal() {
   catch { return { converted: 0, savedBytes: 0 }; }
 }
 let sessionStats = { converted: 0, savedBytes: 0 }, localStats = loadLocal();
-
 function renderStats() {
   $('sessionConverted').textContent = sessionStats.converted.toLocaleString();
   $('sessionSaved').textContent = formatFileSize(sessionStats.savedBytes);
-  $('globalLabel').textContent = 'All Time (This Browser)';
   $('globalConverted').textContent = localStats.converted.toLocaleString();
   $('globalSaved').textContent = formatFileSize(localStats.savedBytes);
 }
-
 function recordConversion(orig, out) {
   const saved = Math.max(0, orig - out);
   sessionStats.converted++; sessionStats.savedBytes += saved;
-  
-  // 1. Save to Browser Memory (localStorage)
   localStats.converted++; localStats.savedBytes += saved;
   try { localStorage.setItem(LOCAL_KEY, JSON.stringify(localStats)); } catch {}
-  
-  // 2. Send to Google Analytics (if gtag is loaded)
-  if (typeof gtag === 'function') {
-    gtag('event', 'image_compressed', {
-      event_category: 'engagement',
-      event_label: 'Image Compression',
-      value: 1, // Number of images
-      saved_bytes: saved // Custom metric (must be registered in GA4 dashboard)
-    });
-  }
-
+  if (typeof gtag === 'function') gtag('event', 'image_compressed', { event_category: 'engagement', event_label: 'Image Compression', value: 1, saved_bytes: saved });
   renderStats();
 }
-
-$('statsResetBtn').addEventListener('click', () => { 
-  sessionStats = { converted: 0, savedBytes: 0 }; 
-  renderStats(); 
-});
+$('statsResetBtn').addEventListener('click', () => { sessionStats = { converted: 0, savedBytes: 0 }; renderStats(); });
 renderStats();
 
 /* ---------- UI wiring ---------- */
@@ -328,7 +296,6 @@ const updateQuality = () => { $('qualityValue').textContent = $('qualityLevel').
 $('qualityLevel').addEventListener('input', updateQuality); updateQuality();
 outputFormat.addEventListener('change', () => svgOptions.classList.toggle('visible', outputFormat.value === 'svg'));
 for (const id of ['resizeWidth', 'resizeHeight']) $(id).addEventListener('input', (e) => { if (e.target.value) e.target.value = clampDimension(e.target.value); });
-
 $('uploadBtn').addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });
 $('pickFolderBtn').addEventListener('click', (e) => { e.stopPropagation(); folderInput.click(); });
 dropZone.addEventListener('click', (e) => { if (!e.target.closest('button')) fileInput.click(); });
@@ -337,7 +304,6 @@ for (const ev of ['dragenter', 'dragover']) dropZone.addEventListener(ev, (e) =>
 for (const ev of ['dragleave', 'drop']) dropZone.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('dragover'); });
 dropZone.addEventListener('drop', (e) => { if (e.dataTransfer?.files) handleFiles(e.dataTransfer.files); });
 zipBtn.addEventListener('click', downloadAllAsZip);
-
 window.addEventListener('beforeunload', (e) => { if (counts.queued || counts.processing) { e.preventDefault(); e.returnValue = ''; } });
 
 /* ---------- folder mode ---------- */
@@ -356,7 +322,6 @@ $('chooseFolderBtn').addEventListener('click', async () => {
     if (err.name !== 'AbortError') $('folderStatus').textContent = 'Folder access is unavailable here.';
   }
 });
-
 async function getDir(dirs) {
   let d = outDir, key = '';
   for (const part of dirs) {
@@ -368,8 +333,7 @@ async function getDir(dirs) {
   return d;
 }
 async function saveToFolder(blob, name, dirs) {
-  const dir = await getDir(dirs);
-  const prefix = dirs.join('/') + '/';
+  const dir = await getDir(dirs), prefix = dirs.join('/') + '/';
   const dot = name.lastIndexOf('.');
   const base = dot > 0 ? name.slice(0, dot) : name, ext = dot > 0 ? name.slice(dot) : '';
   let finalName = null;
@@ -714,7 +678,7 @@ function handleFiles(list) {
   renderUI(); pump();
 }
 function pump() {
-  while (active < LIMITS.concurrency && qHead < queue.length) {
+  while (active < getWorkers() && qHead < queue.length) {
     const f = queue[qHead++];
     if (f.status !== 'queued') continue;
     active++;
@@ -743,14 +707,10 @@ async function processFile(f, s) {
       bmp = await decodeImage(file); blob = await encodeRaster(file, bmp, s.format, s); ext = FORMAT[s.format].ext;
     }
     if (!blob || !blob.size) throw new Error('Conversion failed.');
-
     const keep = s.format !== 'original' && blob.size >= f.size;
     const out = keep ? file : blob;
     f.kept = keep; f.newSize = out.size;
-    
-    // REMOVED '_aznur.' SUFFIX HERE:
     f.outName = keep ? f.name : `${f.name.replace(/\.[^/.]+$/, '')}.${ext}`;
-
     if (outDir) {
       f.savedName = await saveToFolder(out, f.outName, f.dirs);
     } else {
