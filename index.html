@@ -11,176 +11,607 @@ gtag('js',new Date());gtag('config','G-J2ZGTK9Z2P');
 <title>Aznur Image Compressor</title>
 <meta name="description" content="Compress and convert images between many formats. Output never exceeds input size. Fast, secure, private.">
 <meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="light dark">
 <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <style>
-:root{--bg:#fafafa;--surface:#fff;--border:#e7e5e4;--text:#1c1917;--muted:#57534e;--accent:#f59e0b;--accent-h:#d97706;--ok:#10b981;--err:#ef4444;--info:#3b82f6;--svg:#8b5cf6;--r:6px;--rl:10px}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.45;font-size:14px}
-.container{max-width:760px;margin:0 auto;padding:24px 16px}
-header{text-align:center;margin-bottom:20px}
-h1{font-size:1.7rem;font-weight:700;margin-bottom:4px}
-.subtitle{font-size:.9rem;color:var(--muted);max-width:520px;margin:0 auto}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:16px;margin-bottom:14px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
-.fg{display:flex;flex-direction:column;gap:6px}
-label{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-select,input[type=number]{width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:var(--r);font-size:.9rem;background:#fff}
-select:focus,input:focus{outline:none;border-color:var(--accent)}
-.qv{font-weight:700;color:var(--accent);text-transform:none;letter-spacing:0}
-.lbl{display:flex;justify-content:space-between;align-items:center}
-.row{display:flex;align-items:center;gap:8px}
-.cb{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:.82rem;color:var(--muted)}
-.cb input{width:auto}
-.cb label{text-transform:none;font-weight:500;font-size:.8rem;letter-spacing:0}
-.help{font-size:.72rem;color:var(--muted);line-height:1.35}
-input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:999px;background:var(--border);outline:none;cursor:pointer;padding:0;border:0;margin:6px 0}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3)}
-input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.3)}
-.svg-opts{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:none}
-.svg-opts.visible{display:block}
-.save-row{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-#folderStatus,#notice{font-size:.78rem;color:var(--muted)}
-#notice{margin-bottom:10px;min-height:1em}
-.upload-zone{background:var(--surface);border:2px dashed var(--border);border-radius:var(--rl);padding:28px 16px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:12px;user-select:none}
-.upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:#fffbeb}
-.upload-zone h2{font-size:1.05rem}
-.upload-icon{font-size:1.9rem;margin-bottom:6px}
-.btn{background:var(--text);color:#fff;padding:8px 18px;border-radius:var(--r);font-weight:600;border:none;cursor:pointer;font-size:.88rem;margin-top:8px}
-.btn:hover{background:#333}
-.btn.secondary{background:transparent;color:var(--text);border:1px solid var(--border);margin-left:6px}
-.btn.secondary:hover{background:var(--bg)}
-.hidden{display:none}
-.stats-bar{display:none;justify-content:space-between;flex-wrap:wrap;gap:6px;background:var(--surface);padding:9px 14px;border-radius:var(--r);border:1px solid var(--border);margin-bottom:14px;font-size:.82rem;color:var(--muted)}
-.stat-item{display:flex;gap:4px}.stat-item b{color:var(--text)}
-.files-section{display:none}
-.sec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-.sec-title{font-size:1.05rem;font-weight:700}
-.zip-btn{background:var(--accent);color:#fff;padding:6px 12px;border-radius:var(--r);font-weight:600;border:none;cursor:pointer;display:none;font-size:.82rem}
-.zip-btn:hover{background:var(--accent-h)}.zip-btn:disabled{opacity:.6;cursor:not-allowed}
-.file-list{display:flex;flex-direction:column;gap:6px}
-.file-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:9px 12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
-.file-item.processing{border-left:3px solid var(--accent)}.file-item.completed{border-left:3px solid var(--ok)}
-.file-item.failed{border-left:3px solid var(--err)}.file-item.fallback{border-left:3px solid var(--info)}
-.file-item.svg-optimized{border-left:3px solid var(--svg)}
-.file-info{flex:1;min-width:180px}
-.file-name{font-weight:600;font-size:.88rem;margin-bottom:2px;word-break:break-all}
-.file-meta{font-size:.78rem;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.badge{padding:1px 6px;border-radius:4px;font-size:.68rem;font-weight:700;text-transform:uppercase}
-.badge-queued{background:#fef3c7;color:#92400e}.badge-processing{background:#ffedd5;color:#9a3412}
-.badge-completed{background:#d1fae5;color:#065f46}.badge-failed{background:#fee2e2;color:#991b1b}
-.badge-fallback{background:#dbeafe;color:#1e40af}.badge-svg-optimized{background:#ede9fe;color:#5b21b6}
-.action-btn{background:transparent;border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:4px;font-size:.78rem;cursor:pointer;text-decoration:none;font-weight:600}
-.action-btn:hover{background:var(--bg)}.action-btn:disabled{opacity:.6;cursor:not-allowed}
-.good{font-weight:600;color:var(--ok)}
-.stats-group+.stats-group{margin-top:14px}
-.stats-label{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
-.stat-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:10px;text-align:center}
-.stat-card .l{font-size:.68rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
-.stat-card .v{font-size:1.2rem;font-weight:700}
-footer{margin-top:28px;text-align:center;color:var(--muted);font-size:.78rem;padding-top:14px;border-top:1px solid var(--border)}
-@media(max-width:600px){h1{font-size:1.45rem}.btn.secondary{margin-left:0}}
+/* ============================================================
+   Design system — Aznur Index (warm-neutral, single amber accent)
+   ============================================================ */
+:root{
+  color-scheme: light dark;
+  --bg:#fdfcfc; --fg:#201d1d; --dim:#646262; --faint:#9a9898;
+  --line:#dcd9d9; --accent:#b45309; --accent-fg:#fdfcfc;
+  --active:#f4f0ef; --surface:#faf8f7;
+  --font:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --radius:4px; --maxw:72rem; --pad:1rem;
+}
+@media (min-width:640px){ :root{ --pad:1.5rem; } }
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#161313; --fg:#f1eeee; --dim:#9a9898; --faint:#646262;
+  --line:#302c2c; --accent:#f59e0b; --accent-fg:#161313;
+  --active:#211d1d; --surface:#1c1818;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#161313; --fg:#f1eeee; --dim:#9a9898; --faint:#646262;
+    --line:#302c2c; --accent:#f59e0b; --accent-fg:#161313;
+    --active:#211d1d; --surface:#1c1818;
+  }
+}
+*,*::before,*::after{ box-sizing:border-box; }
+html,body{ margin:0; padding:0; }
+body{
+  font:14.5px/1.65 var(--font);
+  background:var(--bg); color:var(--fg);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+[hidden],.hidden{ display:none !important; }
+:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; border-radius:2px; }
+button{ font:inherit; color:inherit; cursor:pointer; }
+a{ color:inherit; text-decoration:none; }
+img,svg{ max-width:100%; display:block; }
+code{ font-family:inherit; }
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{ transition:none !important; animation:none !important; }
+}
+
+/* ---------- Layout ---------- */
+.wrap{ max-width:var(--maxw); margin:0 auto; padding:0 var(--pad); }
+
+/* ---------- Topbar ---------- */
+.topbar{ border-bottom:1px solid var(--line); }
+.topbar-inner{ display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:.85rem 0; min-height:56px; }
+.brand{ font-size:15px; font-weight:600; letter-spacing:-.01em; }
+.brand .slash{ color:var(--faint); margin:0 .1em; }
+.topbar-tools{ display:flex; align-items:center; gap:.5rem; }
+
+/* ---------- Typography helpers ---------- */
+.eyebrow{
+  font-size:10px; line-height:1.4; font-weight:500;
+  text-transform:uppercase; letter-spacing:.12em;
+  color:var(--accent); margin:0 0 .5rem;
+}
+.lede{ max-width:72ch; color:var(--dim); font-size:14px; margin:0; }
+.note{ color:var(--dim); font-size:12px; line-height:1.55; margin:.35rem 0 0; }
+.help{ color:var(--dim); font-size:11.5px; line-height:1.5; margin:.3rem 0 0; }
+.section-label{
+  font-size:10px; text-transform:uppercase; letter-spacing:.12em;
+  color:var(--dim); margin:1.15rem 0 .55rem;
+  padding-top:.75rem; border-top:1px solid var(--line);
+}
+
+/* ---------- Hero ---------- */
+.hero{ padding:2.25rem 0 1.25rem; }
+.hero h1{
+  font-size:clamp(1.5rem,4vw,2.25rem); font-weight:600;
+  letter-spacing:-.02em; line-height:1.15; margin:.2rem 0 .65rem;
+}
+
+/* ---------- Cards ---------- */
+.card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:1.1rem 1.15rem;
+  margin-bottom:1rem;
+}
+.card h2{
+  font-size:1.05rem; font-weight:600; letter-spacing:-.01em;
+  margin:0; line-height:1.25;
+}
+.card h3{ font-size:.98rem; font-weight:600; margin:0; }
+.row{ display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
+.row-between{ display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; }
+
+/* ---------- Form fields ---------- */
+.field-grid{
+  display:grid; gap:.9rem;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));
+}
+.fg{ display:flex; flex-direction:column; gap:.35rem; min-width:0; }
+.field-head{ display:flex; align-items:center; justify-content:space-between; gap:.5rem; }
+label{
+  font-size:10px; text-transform:uppercase; letter-spacing:.1em;
+  color:var(--dim); font-weight:600;
+}
+select,input[type=number],input[type=text]{
+  width:100%; min-height:36px;
+  padding:.45rem .65rem;
+  font:inherit; font-size:13.5px;
+  color:var(--fg); background:var(--surface);
+  border:1px solid var(--line); border-radius:var(--radius);
+}
+select:hover,input[type=number]:hover{ border-color:var(--accent); }
+select:focus-visible,input[type=number]:focus-visible{ outline-offset:1px; }
+input[type=range]{
+  width:100%; margin:.15rem 0;
+  accent-color:var(--accent);
+}
+.qv{
+  font-size:12px; font-variant-numeric:tabular-nums;
+  color:var(--accent); font-weight:600;
+}
+.cb{ display:flex; align-items:center; gap:.4rem; font-size:12px; color:var(--fg); }
+.cb input{ width:auto; margin:0; accent-color:var(--accent); }
+.cb label{ text-transform:none; letter-spacing:0; font-size:12px; font-weight:400; color:var(--fg); }
+
+/* ---------- Buttons ---------- */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  gap:.4rem; min-height:36px; padding:.45rem .9rem;
+  font:inherit; font-size:13.5px; font-weight:600;
+  color:var(--fg); background:var(--surface);
+  border:1px solid var(--line); border-radius:var(--radius);
+  transition:border-color .15s, background .15s, color .15s;
+}
+.btn:hover{ border-color:var(--accent); }
+.btn:disabled{ opacity:.5; cursor:not-allowed; }
+.btn.accent{ background:var(--accent); color:var(--accent-fg); border-color:var(--accent); }
+.btn.accent:hover{ filter:brightness(1.05); }
+.btn.secondary{ background:var(--surface); }
+.btn.ghost{ background:transparent; border-color:transparent; }
+.btn.ghost:hover{ border-color:var(--line); }
+.btn.sm{ min-height:30px; padding:.3rem .6rem; font-size:12px; }
+
+.action-btn{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:30px; padding:.25rem .55rem;
+  font:inherit; font-size:11.5px; font-weight:500;
+  color:var(--dim); background:transparent;
+  border:1px solid var(--line); border-radius:3px;
+  transition:border-color .15s, color .15s;
+}
+.action-btn:hover{ border-color:var(--accent); color:var(--accent); }
+.action-btn:disabled{ opacity:.5; cursor:not-allowed; }
+
+/* ---------- Preset row ---------- */
+.preset-row{ display:flex; gap:.35rem; flex-wrap:wrap; }
+.preset-btn{
+  min-height:30px; padding:.25rem .7rem;
+  font-size:12px; font-weight:500;
+  color:var(--dim); background:transparent;
+  border:1px solid var(--line); border-radius:3px;
+  transition:border-color .15s, color .15s, background .15s;
+}
+.preset-btn:hover{ border-color:var(--accent); color:var(--accent); }
+.preset-btn[data-active="true"]{ background:var(--active); color:var(--fg); border-color:var(--line); }
+
+/* ---------- SVG options ---------- */
+.svg-opts{
+  display:none;
+  margin-top:.75rem;
+  padding-top:.85rem;
+  border-top:1px solid var(--line);
+}
+.svg-opts.visible{ display:block; }
+
+/* ---------- Save row ---------- */
+.save-row{
+  margin-top:.85rem;
+  padding-top:.85rem;
+  border-top:1px solid var(--line);
+  display:flex; align-items:center; gap:.5rem; flex-wrap:wrap;
+}
+.folder-status{
+  font-size:11.5px; color:var(--dim); flex:1; min-width:200px;
+}
+.folder-status.ok{ color:var(--accent); }
+
+/* ---------- Upload zone ---------- */
+.upload-zone{
+  margin:1rem 0;
+  padding:2.25rem 1rem;
+  background:var(--surface);
+  border:1px dashed var(--line);
+  border-radius:6px;
+  text-align:center;
+  cursor:pointer;
+  transition:border-color .15s, background .15s;
+}
+.upload-zone:hover,.upload-zone.dragover{
+  border-color:var(--accent);
+  background:var(--active);
+}
+.upload-icon{ font-size:1.75rem; margin-bottom:.35rem; }
+.upload-zone h3{ font-size:1rem; margin:0 0 .25rem; font-weight:600; }
+.upload-zone .row{ display:flex; gap:.5rem; justify-content:center; margin-top:.85rem; flex-wrap:wrap; }
+
+#notice{ font-size:12px; color:var(--dim); min-height:1.1em; margin:.25rem 0 .5rem; }
+
+/* ---------- Stats bar ---------- */
+.stats-bar{
+  display:none;
+  align-items:center; flex-wrap:wrap; gap:.9rem 1.25rem;
+  padding:.65rem .85rem; margin:0 0 .85rem;
+  background:var(--surface); border:1px solid var(--line);
+  border-radius:4px; font-size:12px; color:var(--dim);
+}
+.stats-bar.is-paused{ border-color:var(--accent); }
+.stat-item{ display:inline-flex; align-items:center; gap:.35rem; }
+.stat-item b{ color:var(--fg); font-weight:600; font-variant-numeric:tabular-nums; }
+.stat-item[data-active="true"] b{ color:var(--accent); }
+.paused-badge{
+  display:none;
+  margin-left:auto;
+  font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--accent);
+}
+.is-paused .paused-badge{ display:inline-block; }
+
+/* ---------- Search + segmented ---------- */
+.search-wrap{
+  display:flex; align-items:center; gap:.35rem;
+  padding:.25rem .5rem; min-height:34px;
+  background:var(--surface); border:1px solid var(--line);
+  border-radius:var(--radius);
+}
+.search-wrap .prompt{ color:var(--accent); font-weight:600; font-size:13px; }
+.search-wrap input{
+  flex:1; min-width:0; min-height:26px; padding:0;
+  background:transparent; border:0; border-radius:0;
+}
+.search-wrap input:focus-visible{ outline:none; }
+.search-wrap:focus-within{ border-color:var(--accent); outline:1px solid var(--accent); outline-offset:0; }
+kbd{
+  font:inherit; font-size:10.5px;
+  padding:.05rem .35rem;
+  border:1px solid var(--line); border-radius:3px;
+  background:var(--active); color:var(--dim);
+  letter-spacing:.02em;
+}
+.segmented{
+  display:inline-flex; padding:2px;
+  border:1px solid var(--line); border-radius:4px;
+  background:var(--bg);
+}
+.seg{
+  min-height:28px; padding:.2rem .6rem;
+  font-size:12px; font-weight:500;
+  background:transparent; border:0; border-radius:3px;
+  color:var(--dim);
+}
+.seg[data-active="true"]{
+  background:var(--active); color:var(--fg);
+}
+.queue-tools{ display:flex; gap:.4rem; align-items:center; flex-wrap:wrap; }
+
+/* ---------- File list ---------- */
+.file-list{ display:flex; flex-direction:column; margin-top:.5rem; }
+.file-item{
+  display:grid;
+  grid-template-columns:2rem 1fr auto;
+  align-items:start;
+  gap:.65rem;
+  padding:.65rem .1rem;
+  border-bottom:1px dashed var(--line);
+  content-visibility:auto;
+  contain-intrinsic-size:64px;
+}
+.file-item:last-child{ border-bottom:0; }
+.file-item[data-status="processing"] .file-marker,
+.file-item[data-status="processing"] .file-name{ color:var(--accent); }
+.file-marker{
+  color:var(--faint); font-size:12px; padding-top:.1rem;
+  font-variant-numeric:tabular-nums;
+}
+.file-info{ min-width:0; }
+.file-name{
+  font-weight:600; font-size:13.5px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.file-meta{
+  display:flex; flex-wrap:wrap; gap:.5rem;
+  margin-top:.2rem; font-size:11.5px; color:var(--dim);
+  font-variant-numeric:tabular-nums;
+  align-items:center;
+}
+.file-meta .good{ color:var(--fg); }
+.file-meta .bad{ color:var(--accent); }
+.file-actions{
+  display:flex; align-items:center; gap:.3rem;
+  flex-wrap:wrap; justify-content:flex-end;
+}
+.file-saved{ font-size:11.5px; color:var(--dim); }
+
+.badge{
+  display:inline-block;
+  padding:.05rem .45rem;
+  font-size:10px; font-weight:500;
+  text-transform:uppercase; letter-spacing:.08em;
+  border:1px solid var(--line); border-radius:3px;
+  color:var(--dim); background:transparent;
+  white-space:nowrap;
+}
+.file-item[data-status="processing"] .badge{ color:var(--accent); border-color:var(--accent); }
+.file-item[data-status="completed"] .badge,
+.file-item[data-status="svg-optimized"] .badge{ color:var(--fg); border-color:var(--fg); }
+.file-item[data-status="failed"] .badge{ color:var(--accent); border-color:var(--accent); border-style:dashed; }
+.file-item[data-status="fallback"] .badge{ color:var(--dim); border-color:var(--line); border-style:dashed; }
+
+.empty-filter{
+  padding:1.5rem .75rem;
+  text-align:center;
+  color:var(--dim); font-size:12.5px;
+  border:1px dashed var(--line); border-radius:4px;
+  margin-top:.5rem;
+}
+
+/* Cards view */
+.cards-view .file-list{
+  display:grid;
+  gap:.6rem;
+  grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr));
+}
+.cards-view .file-item{
+  grid-template-columns:1fr;
+  padding:.85rem;
+  border:1px solid var(--line);
+  border-radius:4px;
+  background:var(--bg);
+  border-bottom-width:1px;
+}
+.cards-view .file-marker{ display:none; }
+.cards-view .file-name{ white-space:normal; word-break:break-word; }
+.cards-view .file-actions{ justify-content:flex-start; margin-top:.4rem; }
+
+/* Compact view */
+.compact .file-item{ padding:.4rem .1rem; gap:.5rem; }
+.compact .file-name{ font-size:12.5px; }
+.compact .file-meta{ font-size:11px; }
+
+/* ---------- Stat cards ---------- */
+.stat-grid{
+  display:grid; gap:.65rem;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));
+}
+.stat{
+  padding:.85rem;
+  background:var(--bg);
+  border:1px solid var(--line);
+  border-radius:4px;
+}
+.stat-label{
+  font-size:10px; text-transform:uppercase; letter-spacing:.12em;
+  color:var(--dim); margin-bottom:.3rem;
+}
+.stat-value{
+  font-size:1.3rem; font-weight:600; letter-spacing:-.02em;
+  font-variant-numeric:tabular-nums;
+}
+
+/* ---------- Toasts ---------- */
+#toasts{
+  position:fixed; top:1rem; right:1rem;
+  display:flex; flex-direction:column; gap:.5rem;
+  width:min(360px, calc(100vw - 2rem));
+  z-index:1000;
+}
+.toast{
+  display:flex; gap:.55rem; align-items:flex-start;
+  padding:.55rem .7rem;
+  background:var(--surface); color:var(--fg);
+  border:1px solid var(--line);
+  border-left:3px solid var(--accent);
+  border-radius:4px;
+  font-size:12.5px;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+.toast-mark{ color:var(--accent); font-weight:600; flex-shrink:0; }
+
+/* ---------- Footer ---------- */
+footer{
+  margin-top:2.5rem;
+  padding:1.25rem 0 2rem;
+  border-top:1px solid var(--line);
+  color:var(--dim);
+  font-size:12px;
+}
+.footer-row{
+  display:flex; justify-content:space-between; align-items:center;
+  gap:1rem; flex-wrap:wrap; margin-bottom:.65rem;
+}
+.footer-hints{ display:flex; gap:.85rem; flex-wrap:wrap; align-items:center; }
+.footer-hints span{ display:inline-flex; align-items:center; gap:.3rem; }
+
+/* ---------- Responsive ---------- */
+@media (max-width:620px){
+  .hero{ padding:1.5rem 0 1rem; }
+  .topbar-tools .eyebrow{ display:none; }
+  .upload-zone{ padding:1.5rem .85rem; }
+  .queue-tools{ width:100%; }
+  .search-wrap{ flex:1; min-width:0; }
+}
 </style>
 </head>
 <body>
-<div class="container">
-<header>
-  <h1>Aznur Image Compressor</h1>
-  <p class="subtitle">Image &amp; SVG optimization directly in your browser. Your images never leave your device.</p>
+
+<div id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a class="brand" href="#">aznur<span class="slash">/</span>image</a>
+    <div class="topbar-tools">
+      <label class="eyebrow" for="theme1" style="margin:0;">Theme</label>
+      <select id="theme1" aria-label="Theme" style="min-width:104px;min-height:32px;font-size:12px;">
+        <option value="system">System</option>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </div>
+  </div>
 </header>
 
-<div class="card">
-  <div class="grid">
-    <div class="fg">
-      <label for="outputFormat">Output Format</label>
-      <select id="outputFormat"></select>
-    </div>
-    <div class="fg">
-      <div class="lbl"><label for="qualityLevel">Quality</label><span id="qualityValue" class="qv">80%</span></div>
-      <input type="range" id="qualityLevel" min="10" max="100" value="80">
-    </div>
-    <div class="fg">
-      <div class="lbl"><label for="workers">CPU Workers</label><span id="workersValue" class="qv">1 / 1</span></div>
-      <input type="range" id="workers" min="1" max="1" step="1" value="1">
-      <div class="help" id="workersHelp"></div>
-    </div>
-    <div class="fg">
-      <label>Resize (px)</label>
-      <div class="row"><input type="number" id="resizeWidth" placeholder="Width" min="1"><span>×</span><input type="number" id="resizeHeight" placeholder="Height" min="1"></div>
-      <div class="cb"><input type="checkbox" id="lockRatio" checked><label for="lockRatio">Maintain aspect ratio</label></div>
-    </div>
-  </div>
-  <div class="svg-opts" id="svgOptions">
-    <label style="display:block;margin-bottom:4px">SVG Optimization Options</label>
-    <div class="grid" style="gap:0 14px">
-      <div class="cb"><input type="checkbox" id="svgRemoveMetadata" checked><label for="svgRemoveMetadata">Remove metadata &amp; comments</label></div>
-      <div class="cb"><input type="checkbox" id="svgRemoveHidden" checked><label for="svgRemoveHidden">Remove hidden elements</label></div>
-      <div class="cb"><input type="checkbox" id="svgMinifyPaths" checked><label for="svgMinifyPaths">Minify path data</label></div>
-      <div class="cb"><input type="checkbox" id="svgMergeStyles"><label for="svgMergeStyles">Merge styles</label></div>
-      <div class="cb"><input type="checkbox" id="svgRemoveUnusedDefs" checked><label for="svgRemoveUnusedDefs">Remove unused &lt;defs&gt;</label></div>
-      <div class="cb"><input type="checkbox" id="svgShortenIds"><label for="svgShortenIds">Shorten IDs</label></div>
-    </div>
-  </div>
-  <div class="save-row">
-    <button class="action-btn" id="chooseFolderBtn" type="button">Choose output folder</button>
-    <span id="folderStatus">No folder chosen. Results stay in memory (up to 500 MB, then download as ZIP).</span>
-  </div>
-</div>
+<main class="wrap">
 
-<div class="upload-zone" id="dropZone">
-  <div class="upload-icon">📁</div>
-  <h2>Drop images here</h2>
-  <p style="color:var(--muted);font-size:.82rem">or click to browse · JPG, PNG, WebP, AVIF, GIF, BMP, SVG, HEIC, TIFF, ICO</p>
-  <button class="btn" id="uploadBtn" type="button">Select Images</button>
-  <button class="btn secondary" id="pickFolderBtn" type="button">Select a Folder</button>
-  <input type="file" id="fileInput" class="hidden" multiple accept="image/*,.svg,.heic,.heif,.tiff,.tif,.ico">
-  <input type="file" id="folderInput" class="hidden" webkitdirectory multiple>
-</div>
-<p id="notice" aria-live="polite"></p>
+  <section class="hero">
+    <p class="eyebrow">Local · Private</p>
+    <h1>Image Compressor</h1>
+    <p class="lede">Image &amp; SVG optimization directly in your browser. Your images never leave your device.</p>
+  </section>
 
-<div class="stats-bar" id="statsBar">
-  <div class="stat-item"><span>Processing:</span><b id="activeCount">0</b></div>
-  <div class="stat-item"><span>Queued:</span><b id="queueCount">0</b></div>
-  <div class="stat-item"><span>Completed:</span><b id="completedCount">0</b></div>
-  <div class="stat-item"><span>Failed:</span><b id="failedCount">0</b></div>
-</div>
+  <div class="card">
+    <div class="card-head row-between">
+      <div>
+        <p class="eyebrow">Fig 1. Output Settings</p>
+        <h2>Format &amp; Quality</h2>
+      </div>
+      <div class="preset-row" role="group" aria-label="Presets">
+        <button type="button" class="preset-btn" data-preset="web">Web</button>
+        <button type="button" class="preset-btn" data-preset="small">Small</button>
+        <button type="button" class="preset-btn" data-preset="quality">Quality</button>
+        <button type="button" class="preset-btn" data-preset="reset">Reset</button>
+      </div>
+    </div>
 
-<div class="files-section" id="filesSection">
-  <div class="sec-head">
-    <h3 class="sec-title">Your Files <small id="rowNote" style="font-weight:400;color:var(--muted);font-size:.75rem"></small></h3>
-    <div style="display:flex;gap:6px">
-      <button class="action-btn" id="clearBtn" type="button">Clear list</button>
-      <button class="zip-btn" id="downloadAllBtn" type="button">Download All as ZIP</button>
+    <div class="field-grid" style="margin-top:.85rem;">
+      <div class="fg">
+        <label for="outputFormat">Output Format</label>
+        <select id="outputFormat"></select>
+      </div>
+      <div class="fg">
+        <div class="field-head">
+          <label for="qualityLevel">Quality</label>
+          <span id="qualityValue" class="qv">80%</span>
+        </div>
+        <input type="range" id="qualityLevel" min="10" max="100" value="80">
+      </div>
+      <div class="fg">
+        <div class="field-head">
+          <label for="workers">CPU Workers</label>
+          <span id="workersValue" class="qv">1 / 1</span>
+        </div>
+        <input type="range" id="workers" min="1" max="1" step="1" value="1">
+        <div class="help" id="workersHelp"></div>
+      </div>
+      <div class="fg">
+        <label>Resize (px)</label>
+        <div class="row" style="gap:.4rem;">
+          <input type="number" id="resizeWidth" placeholder="Width" min="1" style="flex:1;min-width:0;">
+          <span style="color:var(--faint);">×</span>
+          <input type="number" id="resizeHeight" placeholder="Height" min="1" style="flex:1;min-width:0;">
+        </div>
+        <label class="cb" style="margin-top:.35rem;">
+          <input type="checkbox" id="lockRatio" checked>
+          <span>Maintain aspect ratio</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="svg-opts" id="svgOptions">
+      <p class="section-label" style="margin-top:0;padding-top:0;border-top:0;">SVG Optimization Options</p>
+      <div class="field-grid">
+        <label class="cb"><input type="checkbox" id="svgRemoveMetadata" checked><span>Remove metadata &amp; comments</span></label>
+        <label class="cb"><input type="checkbox" id="svgRemoveHidden" checked><span>Remove hidden elements</span></label>
+        <label class="cb"><input type="checkbox" id="svgMinifyPaths" checked><span>Minify path data</span></label>
+        <label class="cb"><input type="checkbox" id="svgMergeStyles"><span>Merge styles</span></label>
+        <label class="cb"><input type="checkbox" id="svgRemoveUnusedDefs" checked><span>Remove unused &lt;defs&gt;</span></label>
+        <label class="cb"><input type="checkbox" id="svgShortenIds"><span>Shorten IDs</span></label>
+      </div>
+    </div>
+
+    <div class="save-row">
+      <button class="action-btn" id="chooseFolderBtn" type="button">Choose output folder</button>
+      <span class="folder-status" id="folderStatus">No folder chosen. Results stay in memory (up to 500 MB, then download as ZIP).</span>
     </div>
   </div>
-  <div class="file-list" id="fileList"></div>
-</div>
 
-<div class="card" style="margin-top:24px">
-  <h3 style="font-size:.95rem;margin-bottom:10px">Conversion Statistics</h3>
-  <div class="stats-group">
-    <div class="stats-label"><span>This Session</span><button class="action-btn" id="statsResetBtn" type="button">Reset</button></div>
-    <div class="grid">
-      <div class="stat-card"><div class="l">Images Converted</div><div class="v" id="sessionConverted">0</div></div>
-      <div class="stat-card"><div class="l">Space Saved</div><div class="v" id="sessionSaved">0 Bytes</div></div>
+  <div class="upload-zone" id="dropZone">
+    <div class="upload-icon">📁</div>
+    <h3>Drop images here</h3>
+    <p class="note">or click to browse · JPG, PNG, WebP, AVIF, GIF, BMP, SVG, HEIC, TIFF, ICO</p>
+    <div class="row">
+      <button class="btn accent" id="uploadBtn" type="button">Select Images</button>
+      <button class="btn secondary" id="pickFolderBtn" type="button">Select a Folder</button>
+    </div>
+    <input type="file" id="fileInput" class="hidden" multiple accept="image/*,.svg,.heic,.heif,.tiff,.tif,.ico">
+    <input type="file" id="folderInput" class="hidden" webkitdirectory multiple>
+  </div>
+  <p id="notice" aria-live="polite"></p>
+
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-item" id="statProcessing"><span>Processing:</span><b id="activeCount">0</b></div>
+    <div class="stat-item"><span>Queued:</span><b id="queueCount">0</b></div>
+    <div class="stat-item"><span>Completed:</span><b id="completedCount">0</b></div>
+    <div class="stat-item"><span>Failed:</span><b id="failedCount">0</b></div>
+    <span class="paused-badge">[!] Paused</span>
+  </div>
+
+  <div class="card files-section" id="filesSection">
+    <div class="card-head row-between">
+      <div>
+        <p class="eyebrow">Fig 2. Queue</p>
+        <h2>Your Files <small id="rowNote" style="font-weight:400;color:var(--faint);font-size:11px;"></small></h2>
+      </div>
+      <div class="queue-tools">
+        <label class="search-wrap" for="queueSearch" style="min-width:180px;">
+          <span class="prompt" aria-hidden="true">&gt;</span>
+          <input id="queueSearch" type="text" placeholder="Filter queue…" aria-label="Filter queue" spellcheck="false">
+          <kbd aria-hidden="true">/</kbd>
+        </label>
+        <div class="segmented" role="tablist" aria-label="View mode">
+          <button class="seg" id="viewList" data-mode="list" data-active="true" role="tab" aria-selected="true">List</button>
+          <button class="seg" id="viewCards" data-mode="cards" data-active="false" role="tab" aria-selected="false">Cards</button>
+          <button class="seg" id="viewCompact" data-mode="compact" data-active="false" role="tab" aria-selected="false">Compact</button>
+        </div>
+        <button class="action-btn" id="pauseBtn" type="button">Pause</button>
+        <button class="action-btn" id="clearBtn" type="button">Clear list</button>
+        <button class="action-btn" id="downloadAllBtn" type="button">Download All as ZIP</button>
+      </div>
+    </div>
+    <div class="file-list" id="fileList"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head row-between">
+      <div>
+        <p class="eyebrow">Fig 3. Statistics</p>
+        <h2>Conversion Statistics</h2>
+      </div>
+      <button class="action-btn" id="statsResetBtn" type="button">Reset session</button>
+    </div>
+    <p class="section-label">This Session</p>
+    <div class="stat-grid">
+      <div class="stat"><div class="stat-label">Images Converted</div><div class="stat-value" id="sessionConverted">0</div></div>
+      <div class="stat"><div class="stat-label">Space Saved</div><div class="stat-value" id="sessionSaved">0 Bytes</div></div>
+      <div class="stat"><div class="stat-label">Total Output</div><div class="stat-value" id="sessionOutput">0 Bytes</div></div>
+    </div>
+    <p class="section-label">All Time (This Browser)</p>
+    <div class="stat-grid">
+      <div class="stat"><div class="stat-label">Images Converted</div><div class="stat-value" id="globalConverted">-</div></div>
+      <div class="stat"><div class="stat-label">Space Saved</div><div class="stat-value" id="globalSaved">-</div></div>
     </div>
   </div>
-  <div class="stats-group">
-    <div class="stats-label"><span>All Time (This Browser)</span></div>
-    <div class="grid">
-      <div class="stat-card"><div class="l">Images Converted</div><div class="v" id="globalConverted">-</div></div>
-      <div class="stat-card"><div class="l">Space Saved</div><div class="v" id="globalSaved">-</div></div>
-    </div>
-  </div>
-</div>
 
-<footer>
-  <p>&copy; Aznur Image Compressor. Images are processed locally in your browser and are not uploaded to any server.</p>
-</footer>
-</div>
+  <footer>
+    <div class="footer-row">
+      <p style="margin:0;">&copy; Aznur Image Compressor. Images are processed locally in your browser and are not uploaded to any server.</p>
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+        <label class="eyebrow" for="theme2" style="margin:0;">Theme</label>
+        <select id="theme2" aria-label="Theme" style="min-width:104px;min-height:30px;font-size:12px;">
+          <option value="system">System</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+        <button class="action-btn" id="copyDiag" type="button">Copy diagnostics</button>
+      </div>
+    </div>
+    <div class="footer-row" style="margin-bottom:0;">
+      <div class="footer-hints">
+        <span><kbd>/</kbd> filter queue</span>
+        <span><kbd>Ctrl/⌘+K</kbd> focus filter</span>
+        <span><kbd>Esc</kbd> clear / close</span>
+      </div>
+    </div>
+  </footer>
+
+</main>
 
 <script>
 (() => {
@@ -212,7 +643,7 @@ const zipBtn = $('downloadAllBtn'), outputFormat = $('outputFormat'), svgOptions
 
 /* ---------- state ---------- */
 let outDir = null, heldBytes = 0, total = 0;
-const items = [], queue = []; let qHead = 0, active = 0;
+const items = [], queue = []; let qHead = 0, active = 0, paused = false;
 const counts = { queued: 0, processing: 0, done: 0, failed: 0 };
 const usedNames = new Set(), dirCache = new Map();
 let browserSupport = {}, ffmpeg = null, ffmpegReady = false, ffmpegLoadPromise = null, ffmpegBusy = false;
@@ -244,7 +675,38 @@ const getSettings = () => ({
   ratio: $('lockRatio').checked
 });
 
-/* ---------- CPU workers slider ---------- */
+/* ---------- theme ---------- */
+const THEME_KEY = 'aznur-index-theme';
+function applyTheme(value) {
+  if (value === 'system') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme', value);
+  try { localStorage.setItem(THEME_KEY, value); } catch {}
+  ['theme1','theme2'].forEach(id => { const el = $(id); if (el) el.value = value; });
+}
+function initTheme() {
+  let stored = 'system';
+  try { stored = localStorage.getItem(THEME_KEY) || 'system'; } catch {}
+  applyTheme(stored);
+  ['theme1','theme2'].forEach(id => {
+    const el = $(id); if (el) el.addEventListener('change', () => applyTheme(el.value));
+  });
+}
+
+/* ---------- toasts ---------- */
+function notify(message, type = 'ok') {
+  const t = document.createElement('div');
+  t.className = 'toast ' + (type || 'ok');
+  const mark = document.createElement('span');
+  mark.className = 'toast-mark';
+  mark.textContent = type === 'err' ? '[x]' : type === 'warn' ? '[!]' : '[*]';
+  const body = document.createElement('span');
+  body.textContent = message;
+  t.append(mark, body);
+  $('toasts').appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+/* ---------- workers slider ---------- */
 const WORKERS_KEY = 'aznurImageCompressorWorkers_v1';
 const maxCores = Math.max(1, Number(navigator.hardwareConcurrency) || 4);
 const workersEl = $('workers');
@@ -253,7 +715,7 @@ function paintWorkers() {
   const v = getWorkers();
   $('workersValue').textContent = v + ' / ' + maxCores;
   const pct = maxCores > 1 ? ((v - 1) / (maxCores - 1)) * 100 : 100;
-  workersEl.style.background = `linear-gradient(to right, var(--accent) ${pct}%, var(--border) ${pct}%)`;
+  workersEl.style.background = `linear-gradient(to right, var(--accent) ${pct}%, var(--line) ${pct}%)`;
 }
 (function initWorkers() {
   let saved = NaN;
@@ -273,22 +735,26 @@ function loadLocal() {
   try { const p = JSON.parse(localStorage.getItem(LOCAL_KEY) || '{}'); return { converted: num(p.converted), savedBytes: num(p.savedBytes) }; }
   catch { return { converted: 0, savedBytes: 0 }; }
 }
-let sessionStats = { converted: 0, savedBytes: 0 }, localStats = loadLocal();
+let sessionStats = { converted: 0, savedBytes: 0, originalBytes: 0 }, localStats = loadLocal();
 function renderStats() {
   $('sessionConverted').textContent = sessionStats.converted.toLocaleString();
   $('sessionSaved').textContent = formatFileSize(sessionStats.savedBytes);
+  $('sessionOutput').textContent = formatFileSize(Math.max(0, sessionStats.originalBytes - sessionStats.savedBytes));
   $('globalConverted').textContent = localStats.converted.toLocaleString();
   $('globalSaved').textContent = formatFileSize(localStats.savedBytes);
 }
 function recordConversion(orig, out) {
   const saved = Math.max(0, orig - out);
-  sessionStats.converted++; sessionStats.savedBytes += saved;
-  localStats.converted++; localStats.savedBytes += saved;
+  sessionStats.converted++;
+  sessionStats.savedBytes += saved;
+  sessionStats.originalBytes += orig;
+  localStats.converted++;
+  localStats.savedBytes += saved;
   try { localStorage.setItem(LOCAL_KEY, JSON.stringify(localStats)); } catch {}
   if (typeof gtag === 'function') gtag('event', 'image_compressed', { event_category: 'engagement', event_label: 'Image Compression', value: 1, saved_bytes: saved });
   renderStats();
 }
-$('statsResetBtn').addEventListener('click', () => { sessionStats = { converted: 0, savedBytes: 0 }; renderStats(); });
+$('statsResetBtn').addEventListener('click', () => { sessionStats = { converted: 0, savedBytes: 0, originalBytes: 0 }; renderStats(); });
 renderStats();
 
 /* ---------- UI wiring ---------- */
@@ -306,6 +772,39 @@ dropZone.addEventListener('drop', (e) => { if (e.dataTransfer?.files) handleFile
 zipBtn.addEventListener('click', downloadAllAsZip);
 window.addEventListener('beforeunload', (e) => { if (counts.queued || counts.processing) { e.preventDefault(); e.returnValue = ''; } });
 
+/* ---------- presets ---------- */
+const PRESETS = {
+  web:     { format: 'webp', quality: 75 },
+  small:   { format: 'webp', quality: 55 },
+  quality: { format: 'png',  quality: 92 },
+};
+function applyPreset(name) {
+  if (name === 'reset') {
+    if ([...outputFormat.options].some(o => o.value === 'webp')) outputFormat.value = 'webp';
+    $('qualityLevel').value = '80';
+    $('resizeWidth').value = '';
+    $('resizeHeight').value = '';
+    $('lockRatio').checked = true;
+    updateQuality();
+    svgOptions.classList.toggle('visible', outputFormat.value === 'svg');
+    document.querySelectorAll('.preset-btn').forEach(b => b.removeAttribute('data-active'));
+    return;
+  }
+  const p = PRESETS[name];
+  if (!p) return;
+  if ([...outputFormat.options].some(o => o.value === p.format)) outputFormat.value = p.format;
+  $('qualityLevel').value = String(p.quality);
+  updateQuality();
+  svgOptions.classList.toggle('visible', outputFormat.value === 'svg');
+  document.querySelectorAll('.preset-btn').forEach(b => {
+    if (b.dataset.preset === name) b.setAttribute('data-active', 'true');
+    else b.removeAttribute('data-active');
+  });
+}
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => applyPreset(btn.dataset.preset));
+});
+
 /* ---------- folder mode ---------- */
 const pickerSupported = typeof window.showDirectoryPicker === 'function' && window.isSecureContext;
 if (!pickerSupported) {
@@ -317,6 +816,7 @@ $('chooseFolderBtn').addEventListener('click', async () => {
     outDir = await window.showDirectoryPicker({ mode: 'readwrite' });
     usedNames.clear(); dirCache.clear();
     $('folderStatus').textContent = 'Saving straight to "' + outDir.name + '". Nothing is kept in memory and no ZIP is made.';
+    $('folderStatus').classList.add('ok');
     renderUI();
   } catch (err) {
     if (err.name !== 'AbortError') $('folderStatus').textContent = 'Folder access is unavailable here.';
@@ -593,66 +1093,199 @@ function sanitizeSvg(text, o) {
   return '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(root);
 }
 
-/* ---------- queue ---------- */
+/* ---------- queue render ---------- */
 const statusGroup = (s) => (s === 'queued' ? 'queued' : s === 'processing' ? 'processing' : s === 'failed' ? 'failed' : ['completed','fallback','svg-optimized'].includes(s) ? 'done' : null);
-const STATUS_LABEL = { queued: 'Queued', processing: 'Processing', completed: 'Completed', failed: 'Error', fallback: 'Original Kept', 'svg-optimized': 'SVG Optimized' };
+const STATUS_LABEL = { queued: 'Queued', processing: 'Processing', completed: 'Completed', failed: 'Error', fallback: 'Original kept', 'svg-optimized': 'SVG Optimized' };
+
+function applyFilter() {
+  const input = $('queueSearch');
+  const q = (input?.value || '').trim().toLowerCase();
+  const rows = fileList.querySelectorAll('.file-item');
+  let visible = 0;
+  rows.forEach(r => {
+    const name = r.dataset.name || '';
+    const show = !q || name.includes(q);
+    r.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  const existing = fileList.querySelector('.empty-filter');
+  if (existing) existing.remove();
+  if (q && visible === 0 && rows.length > 0) {
+    const e = document.createElement('div');
+    e.className = 'empty-filter';
+    e.textContent = `No files match "${input.value}".`;
+    fileList.appendChild(e);
+  }
+}
 
 function renderUI() {
   $('activeCount').textContent = counts.processing;
   $('queueCount').textContent = counts.queued;
   $('completedCount').textContent = counts.done;
   $('failedCount').textContent = counts.failed;
+
+  $('statProcessing').dataset.active = counts.processing > 0 ? 'true' : 'false';
+  statsBar.classList.toggle('is-paused', paused);
+
   const any = total > 0;
   filesSection.style.display = any ? 'block' : 'none';
   statsBar.style.display = any ? 'flex' : 'none';
   zipBtn.style.display = (!outDir && items.length) ? 'inline-block' : 'none';
   $('rowNote').textContent = total > MAX_ROWS ? `(showing latest ${MAX_ROWS} of ${total.toLocaleString()})` : '';
+
+  applyFilter();
 }
+
 function setStatus(f, status, label) {
   const p = statusGroup(f.status); if (p) counts[p]--;
   f.status = status;
   const n = statusGroup(status); if (n) counts[n]++;
   if (!f.row) return;
-  f.row.className = 'file-item ' + status;
+  f.row.className = 'file-item';
+  f.row.dataset.status = status;
+  const marker = f.row.querySelector('.file-marker');
+  if (marker) marker.textContent = status === 'processing' ? '[*]' : '└';
   const b = f.row.querySelector('.badge');
-  b.className = 'badge badge-' + status;
-  b.textContent = label || STATUS_LABEL[status] || status;
+  if (b) b.textContent = label || STATUS_LABEL[status] || status;
 }
+
 function createRow(f) {
-  const div = document.createElement('div'); div.className = 'file-item queued'; div._f = f;
-  const info = document.createElement('div'); info.className = 'file-info';
-  const nm = document.createElement('div'); nm.className = 'file-name'; nm.textContent = f.dirs.concat(f.name).join('/');
-  const meta = document.createElement('div'); meta.className = 'file-meta';
-  const o = document.createElement('span'); o.textContent = 'Original: ' + formatFileSize(f.size);
-  const b = document.createElement('span'); b.className = 'badge badge-queued'; b.textContent = 'Queued';
-  meta.append(o, b); info.append(nm, meta);
-  const act = document.createElement('div'); act.className = 'file-actions';
-  div.append(info, act); return div;
+  const div = document.createElement('div');
+  div.className = 'file-item';
+  div.dataset.status = 'queued';
+  div.dataset.name = (f.dirs.concat(f.name).join('/')).toLowerCase();
+  div._f = f;
+
+  const marker = document.createElement('span');
+  marker.className = 'file-marker';
+  marker.textContent = '└';
+
+  const info = document.createElement('div');
+  info.className = 'file-info';
+  const nm = document.createElement('div');
+  nm.className = 'file-name';
+  nm.textContent = f.dirs.concat(f.name).join('/');
+  const meta = document.createElement('div');
+  meta.className = 'file-meta';
+  const o = document.createElement('span');
+  o.textContent = 'Original: ' + formatFileSize(f.size);
+  const b = document.createElement('span');
+  b.className = 'badge';
+  b.textContent = 'Queued';
+  meta.append(o, b);
+  info.append(nm, meta);
+
+  const act = document.createElement('div');
+  act.className = 'file-actions';
+
+  div.append(marker, info, act);
+  return div;
 }
+
 function ensureRow(f) {
   if (f.row) return;
   f.row = createRow(f);
   fileList.insertBefore(f.row, fileList.firstChild);
-  while (fileList.children.length > MAX_ROWS) { const last = fileList.lastElementChild; if (last._f) last._f.row = null; last.remove(); }
-}
-function updateDetails(f) {
-  if (!f.row) return;
-  const meta = f.row.querySelector('.file-meta'), act = f.row.querySelector('.file-actions');
-  const old = meta.querySelector('.size-reduction'); if (old) old.remove();
-  const sp = document.createElement('span'); sp.className = 'size-reduction' + (f.kept ? '' : ' good'); sp.style.fontWeight = '600';
-  sp.textContent = f.kept
-    ? formatFileSize(f.size) + ' (Original kept: conversion would be larger)'
-    : formatFileSize(f.size) + ' → ' + formatFileSize(f.newSize) + ' (-' + Math.max(0, Math.round((1 - f.newSize / f.size) * 100)) + '%)';
-  meta.appendChild(sp);
-  act.textContent = '';
-  if (f.url) {
-    const a = document.createElement('a'); a.href = f.url; a.download = sanitizeFilename(f.outName);
-    a.className = 'action-btn'; a.textContent = 'Download'; a.rel = 'noopener noreferrer'; act.appendChild(a);
-  } else if (f.savedName) {
-    const s = document.createElement('span'); s.className = 'file-meta'; s.textContent = 'Saved as ' + f.savedName; act.appendChild(s);
+  while (fileList.querySelectorAll('.file-item').length > MAX_ROWS) {
+    const last = [...fileList.querySelectorAll('.file-item')].pop();
+    if (last._f) last._f.row = null;
+    last.remove();
   }
 }
 
+function updateDetails(f) {
+  if (!f.row) return;
+  const meta = f.row.querySelector('.file-meta');
+  if (!meta) return;
+  const old = meta.querySelector('.size-reduction');
+  if (old) old.remove();
+
+  const sp = document.createElement('span');
+  sp.className = 'size-reduction' + (f.kept ? '' : ' good');
+  sp.style.fontWeight = '600';
+  sp.textContent = f.kept
+    ? formatFileSize(f.size) + ' (Original kept)'
+    : formatFileSize(f.size) + ' → ' + formatFileSize(f.newSize) + ' (-' + Math.max(0, Math.round((1 - f.newSize / f.size) * 100)) + '%)';
+  meta.appendChild(sp);
+
+  if (f.srcW && f.srcH && f.srcW > 0 && f.srcH > 0) {
+    const dim = document.createElement('span');
+    dim.textContent = `${f.srcW}×${f.srcH}`;
+    meta.appendChild(dim);
+  }
+
+  renderActions(f);
+}
+
+function renderActions(f) {
+  if (!f.row) return;
+  const act = f.row.querySelector('.file-actions');
+  if (!act) return;
+  act.textContent = '';
+  if (f.status === 'processing') return;
+
+  if (f.url) {
+    const a = document.createElement('a');
+    a.href = f.url;
+    a.download = sanitizeFilename(f.outName);
+    a.className = 'action-btn';
+    a.textContent = 'Download';
+    a.rel = 'noopener noreferrer';
+    act.appendChild(a);
+  } else if (f.savedName) {
+    const s = document.createElement('span');
+    s.className = 'file-saved';
+    s.textContent = 'Saved';
+    act.appendChild(s);
+  }
+
+  if (f.status === 'failed') {
+    const retry = document.createElement('button');
+    retry.type = 'button';
+    retry.className = 'action-btn';
+    retry.textContent = 'Retry';
+    retry.onclick = () => retryItem(f);
+    act.appendChild(retry);
+  }
+
+  const rm = document.createElement('button');
+  rm.type = 'button';
+  rm.className = 'action-btn';
+  rm.textContent = 'Remove';
+  rm.onclick = () => removeItem(f);
+  act.appendChild(rm);
+}
+
+function retryItem(f) {
+  if (f.status === 'processing' || f.status === 'queued') return;
+  setStatus(f, 'queued');
+  f.blob = null;
+  if (f.url) { try { URL.revokeObjectURL(f.url); } catch {} f.url = null; }
+  f.newSize = 0;
+  f.kept = false;
+  f.savedName = '';
+  queue.push(f);
+  renderActions(f);
+  renderUI();
+  pump();
+}
+
+function removeItem(f) {
+  if (f.status === 'processing') return;
+  if (f.url) { try { URL.revokeObjectURL(f.url); } catch {} f.url = null; }
+  if (f.blob && !outDir) { heldBytes = Math.max(0, heldBytes - f.blob.size); }
+  f.blob = null;
+  const st = statusGroup(f.status);
+  if (st) counts[st]--;
+  f.status = 'removed';
+  total = Math.max(0, total - 1);
+  const idx = items.indexOf(f);
+  if (idx >= 0) items.splice(idx, 1);
+  if (f.row) { f.row.remove(); f.row = null; }
+  renderUI();
+}
+
+/* ---------- file intake ---------- */
 function handleFiles(list) {
   const cap = outDir ? LIMITS.maxFilesFolder : LIMITS.maxFilesMemory;
   let skippedCap = 0, skippedType = 0, skippedSize = 0;
@@ -665,7 +1298,8 @@ function handleFiles(list) {
     const f = {
       id: newId(), file, name: sanitizeFilename(file.name), size: file.size, status: 'queued',
       dirs: rel.length > 2 ? rel.slice(1, -1).map(sanitizeFilename) : [],
-      blob: null, url: null, outName: '', newSize: 0, kept: false, savedName: '', row: null
+      blob: null, url: null, outName: '', newSize: 0, kept: false, savedName: '', row: null,
+      srcW: 0, srcH: 0
     };
     total++; counts.queued++; queue.push(f);
     if (!outDir) items.push(f);
@@ -677,7 +1311,9 @@ function handleFiles(list) {
   $('notice').textContent = msg.join(' ');
   renderUI(); pump();
 }
+
 function pump() {
+  if (paused) { renderUI(); return; }
   while (active < getWorkers() && qHead < queue.length) {
     const f = queue[qHead++];
     if (f.status !== 'queued') continue;
@@ -706,6 +1342,7 @@ async function processFile(f, s) {
     } else {
       bmp = await decodeImage(file); blob = await encodeRaster(file, bmp, s.format, s); ext = FORMAT[s.format].ext;
     }
+    if (bmp && bmp.width && bmp.height) { f.srcW = bmp.width; f.srcH = bmp.height; }
     if (!blob || !blob.size) throw new Error('Conversion failed.');
     const keep = s.format !== 'original' && blob.size >= f.size;
     const out = keep ? file : blob;
@@ -718,12 +1355,17 @@ async function processFile(f, s) {
       heldBytes += out.size; f.blob = out; f.url = URL.createObjectURL(out);
     }
     setStatus(f, keep ? 'fallback' : (s.format === 'svg' && svg ? 'svg-optimized' : 'completed'));
-    updateDetails(f); recordConversion(f.size, f.newSize);
+    updateDetails(f);
+    recordConversion(f.size, f.newSize);
   } catch (err) {
     if (err && err.message === 'MEMORY_FULL') {
-      setStatus(f, 'failed', 'Memory full: use a folder');
+      setStatus(f, 'failed', 'Memory full');
       $('notice').textContent = 'Memory limit reached. Choose an output folder to keep going.';
-    } else { console.error('Error processing', f.name, err); setStatus(f, 'failed', 'Error'); }
+    } else {
+      console.error('Error processing', f.name, err);
+      setStatus(f, 'failed', 'Error');
+    }
+    renderActions(f);
   } finally {
     if (bmp && typeof bmp.close === 'function') bmp.close();
     if (outDir) f.file = null;
@@ -731,16 +1373,41 @@ async function processFile(f, s) {
   }
 }
 
+/* ---------- clear / pause / view ---------- */
 $('clearBtn').addEventListener('click', () => {
   if (counts.queued || counts.processing) return;
   for (const f of items) if (f.url) { try { URL.revokeObjectURL(f.url); } catch {} }
   items.length = 0; heldBytes = 0; total = 0;
   counts.queued = counts.processing = counts.done = counts.failed = 0;
-  usedNames.clear(); fileList.textContent = ''; $('notice').textContent = '';
+  usedNames.clear(); fileList.textContent = '';
+  $('notice').textContent = '';
+  $('queueSearch').value = '';
   renderUI();
 });
 
-/* ---------- ZIP (memory mode only) ---------- */
+$('pauseBtn').addEventListener('click', () => {
+  paused = !paused;
+  $('pauseBtn').textContent = paused ? 'Resume' : 'Pause';
+  document.body.classList.toggle('is-paused', paused);
+  renderUI();
+  if (!paused) pump();
+});
+
+function setView(mode) {
+  filesSection.classList.toggle('cards-view', mode === 'cards');
+  filesSection.classList.toggle('compact', mode === 'compact');
+  ['viewList','viewCards','viewCompact'].forEach(id => {
+    const b = $(id); if (!b) return;
+    const active = b.dataset.mode === mode;
+    b.dataset.active = String(active);
+    b.setAttribute('aria-selected', String(active));
+  });
+}
+$('viewList').addEventListener('click', () => setView('list'));
+$('viewCards').addEventListener('click', () => setView('cards'));
+$('viewCompact').addEventListener('click', () => setView('compact'));
+
+/* ---------- ZIP (memory mode) ---------- */
 async function downloadAllAsZip() {
   const done = items.filter((f) => ['completed','fallback','svg-optimized'].includes(f.status) && f.blob);
   if (!done.length) return;
@@ -767,11 +1434,69 @@ async function downloadAllAsZip() {
   } finally { zipBtn.disabled = false; }
 }
 
+/* ---------- search ---------- */
+$('queueSearch').addEventListener('input', applyFilter);
+
+/* ---------- copy diagnostics ---------- */
+$('copyDiag').addEventListener('click', () => {
+  const diag = {
+    format: outputFormat.value,
+    quality: Number($('qualityLevel').value),
+    workers: getWorkers(),
+    maxCores,
+    resize: { w: $('resizeWidth').value, h: $('resizeHeight').value, lock: $('lockRatio').checked },
+    theme: (() => { try { return document.documentElement.getAttribute('data-theme') || 'system'; } catch { return 'system'; } })(),
+    counts: { ...counts },
+    total,
+    paused,
+    folderMode: Boolean(outDir),
+    ffmpegReady,
+    pickerSupported,
+    browserSupport,
+    view: filesSection.classList.contains('cards-view') ? 'cards' : filesSection.classList.contains('compact') ? 'compact' : 'list',
+  };
+  const text = JSON.stringify(diag, null, 2);
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text).then(() => notify('Diagnostics copied.')).catch(() => notify('Copy failed.', 'err'));
+  } else {
+    notify('Clipboard unavailable.', 'warn');
+  }
+});
+
+/* ---------- keyboard shortcuts ---------- */
+document.addEventListener('keydown', (e) => {
+  const active = document.activeElement;
+  const isTyping = active && (
+    active.tagName === 'INPUT' ||
+    active.tagName === 'TEXTAREA' ||
+    active.tagName === 'SELECT' ||
+    active.isContentEditable
+  );
+  const sectionVisible = filesSection.style.display !== 'none';
+
+  if (e.key === '/' && !isTyping && !e.ctrlKey && !e.metaKey) {
+    if (sectionVisible) { e.preventDefault(); $('queueSearch').focus(); $('queueSearch').select(); }
+    return;
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    if (sectionVisible) { e.preventDefault(); $('queueSearch').focus(); $('queueSearch').select(); }
+    return;
+  }
+  if (e.key === 'Escape' && active === $('queueSearch')) {
+    if ($('queueSearch').value) { $('queueSearch').value = ''; applyFilter(); }
+    else { $('queueSearch').blur(); }
+  }
+});
+
+/* ---------- pagehide cleanup ---------- */
 window.addEventListener('pagehide', () => {
   for (const f of items) if (f.url) { try { URL.revokeObjectURL(f.url); } catch {} }
   if (ffmpegReady && ffmpeg) { try { ffmpeg.exit(); } catch {} }
 }, { once: true });
 
+/* ---------- boot ---------- */
+initTheme();
+setView('list');
 (async () => {
   browserSupport = await detectBrowserSupport();
   populateFormatDropdown();
