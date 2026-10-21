@@ -91,7 +91,7 @@ code{ font-family:inherit; }
 .hero{ padding:2.25rem 0 1.25rem; }
 .hero h1{
   font-size:clamp(1.5rem,4vw,2.25rem); font-weight:600;
-  letter-spacing:-.02em; line-height:1.15; margin:.2rem 0 .65rem;
+  letter-spacing:-.02em; line-height:1.15; margin:0 0 .65rem;
 }
 
 /* ---------- Cards ---------- */
@@ -451,7 +451,6 @@ footer{
 <main class="wrap">
 
   <section class="hero">
-    <p class="eyebrow">Local · Private</p>
     <h1>Image Compressor</h1>
     <p class="lede">Image &amp; SVG optimization directly in your browser. Your images never leave your device.</p>
   </section>
@@ -459,7 +458,6 @@ footer{
   <div class="card">
     <div class="card-head row-between">
       <div>
-        <p class="eyebrow">Fig 1. Output Settings</p>
         <h2>Format &amp; Quality</h2>
       </div>
       <div class="preset-row" role="group" aria-label="Presets">
@@ -490,17 +488,26 @@ footer{
         <input type="range" id="workers" min="1" max="1" step="1" value="1">
         <div class="help" id="workersHelp"></div>
       </div>
-      <div class="fg">
-        <label>Resize (px)</label>
+      <div class="fg" style="grid-column:1/-1;">
+        <label for="passportPreset">Resize — passport / photo preset</label>
         <div class="row" style="gap:.4rem;">
-          <input type="number" id="resizeWidth" placeholder="Width" min="1" style="flex:1;min-width:0;">
+          <select id="passportPreset" style="flex:2;min-width:0;"></select>
+          <select id="passportDpi" style="flex:0 0 auto;width:auto;min-width:110px;" aria-label="DPI">
+            <option value="300">300 DPI</option>
+            <option value="600">600 DPI</option>
+          </select>
+        </div>
+        <div class="row" style="gap:.4rem;margin-top:.4rem;">
+          <input type="number" id="resizeWidth" placeholder="Width px" min="1" style="flex:1;min-width:0;">
           <span style="color:var(--faint);">×</span>
-          <input type="number" id="resizeHeight" placeholder="Height" min="1" style="flex:1;min-width:0;">
+          <input type="number" id="resizeHeight" placeholder="Height px" min="1" style="flex:1;min-width:0;">
         </div>
         <label class="cb" style="margin-top:.35rem;">
           <input type="checkbox" id="lockRatio" checked>
           <span>Maintain aspect ratio</span>
         </label>
+        <div class="help" id="passportHelp">Choose a passport preset or enter custom pixel dimensions.</div>
+        <div class="help">Background colour must match the destination country’s requirement — usually white.</div>
       </div>
     </div>
 
@@ -546,7 +553,6 @@ footer{
   <div class="card files-section" id="filesSection">
     <div class="card-head row-between">
       <div>
-        <p class="eyebrow">Fig 2. Queue</p>
         <h2>Your Files <small id="rowNote" style="font-weight:400;color:var(--faint);font-size:11px;"></small></h2>
       </div>
       <div class="queue-tools">
@@ -571,7 +577,6 @@ footer{
   <div class="card">
     <div class="card-head row-between">
       <div>
-        <p class="eyebrow">Fig 3. Statistics</p>
         <h2>Conversion Statistics</h2>
       </div>
       <button class="action-btn" id="statsResetBtn" type="button">Reset session</button>
@@ -599,7 +604,6 @@ footer{
           <option value="light">Light</option>
           <option value="dark">Dark</option>
         </select>
-        <button class="action-btn" id="copyDiag" type="button">Copy diagnostics</button>
       </div>
     </div>
     <div class="footer-row" style="margin-bottom:0;">
@@ -627,12 +631,15 @@ const FORMAT = Object.freeze({
   jpeg: { mime: 'image/jpeg', ext: 'jpeg', native: true },
   png:  { mime: 'image/png',  ext: 'png',  native: true },
   avif: { mime: 'image/avif', ext: 'avif', native: false },
+  tiff: { mime: 'image/tiff', ext: 'tiff', native: false },
+  apng: { mime: 'image/apng', ext: 'apng', native: false },
+  tga:  { mime: 'image/x-tga', ext: 'tga',  native: false },
   gif:  { mime: 'image/gif',  ext: 'gif',  native: false },
   bmp:  { mime: 'image/bmp',  ext: 'bmp',  native: false },
   svg:  { mime: 'image/svg+xml', ext: 'svg', native: true }
 });
-const FORMAT_ORDER = ['webp','jpeg','png','avif','gif','bmp','svg','original'];
-const FFMPEG_FORMATS = new Set(['webp','avif','jpeg','png','gif','bmp']);
+const FORMAT_ORDER = ['webp','jpeg','png','avif','tiff','apng','tga','gif','bmp','svg','original'];
+const FFMPEG_FORMATS = new Set(['webp','avif','jpeg','png','gif','bmp','tiff','tga','apng']);
 const ALLOWED_EXT = new Set(['.jpg','.jpeg','.png','.webp','.avif','.gif','.bmp','.svg','.heic','.heif','.tiff','.tif','.ico']);
 const ALLOWED_MIME = new Set(['image/jpeg','image/png','image/webp','image/avif','image/gif','image/bmp','image/svg+xml','image/heic','image/heif','image/tiff','image/x-icon','image/vnd.microsoft.icon']);
 
@@ -772,7 +779,7 @@ dropZone.addEventListener('drop', (e) => { if (e.dataTransfer?.files) handleFile
 zipBtn.addEventListener('click', downloadAllAsZip);
 window.addEventListener('beforeunload', (e) => { if (counts.queued || counts.processing) { e.preventDefault(); e.returnValue = ''; } });
 
-/* ---------- presets ---------- */
+/* ---------- format presets ---------- */
 const PRESETS = {
   web:     { format: 'webp', quality: 75 },
   small:   { format: 'webp', quality: 55 },
@@ -785,6 +792,8 @@ function applyPreset(name) {
     $('resizeWidth').value = '';
     $('resizeHeight').value = '';
     $('lockRatio').checked = true;
+    $('passportPreset').value = '-1';
+    $('passportHelp').textContent = 'Choose a passport preset or enter custom pixel dimensions.';
     updateQuality();
     svgOptions.classList.toggle('visible', outputFormat.value === 'svg');
     document.querySelectorAll('.preset-btn').forEach(b => b.removeAttribute('data-active'));
@@ -792,7 +801,8 @@ function applyPreset(name) {
   }
   const p = PRESETS[name];
   if (!p) return;
-  if ([...outputFormat.options].some(o => o.value === p.format)) outputFormat.value = p.format;
+  if (![...outputFormat.options].some(o => o.value === p.format)) return;
+  outputFormat.value = p.format;
   $('qualityLevel').value = String(p.quality);
   updateQuality();
   svgOptions.classList.toggle('visible', outputFormat.value === 'svg');
@@ -804,6 +814,115 @@ function applyPreset(name) {
 document.querySelectorAll('.preset-btn').forEach(btn => {
   btn.addEventListener('click', () => applyPreset(btn.dataset.preset));
 });
+
+/* ---------- passport presets ---------- */
+const PASSPORT_PRESETS = [
+  { country: 'Argentina',      unit: 'mm', w: 40, h: 40 },
+  { country: 'Australia',      unit: 'mm', w: 35, h: 45 },
+  { country: 'Austria',        unit: 'mm', w: 35, h: 45 },
+  { country: 'Bangladesh',     unit: 'mm', w: 45, h: 55 },
+  { country: 'Belgium',        unit: 'mm', w: 35, h: 45 },
+  { country: 'Brazil',         unit: 'mm', w: 50, h: 70 },
+  { country: 'Canada',         unit: 'mm', w: 50, h: 70 },
+  { country: 'Chile',          unit: 'mm', w: 45, h: 45 },
+  { country: 'China',          unit: 'mm', w: 33, h: 48 },
+  { country: 'Colombia',       unit: 'mm', w: 35, h: 45 },
+  { country: 'Cyprus',         unit: 'mm', w: 40, h: 50 },
+  { country: 'Czech Republic', unit: 'mm', w: 35, h: 45 },
+  { country: 'Egypt',          unit: 'mm', w: 40, h: 60 },
+  { country: 'France',         unit: 'mm', w: 35, h: 45 },
+  { country: 'Germany',        unit: 'mm', w: 35, h: 45 },
+  { country: 'Greece',         unit: 'mm', w: 35, h: 45 },
+  { country: 'Hong Kong',      unit: 'mm', w: 40, h: 50 },
+  { country: 'India',          unit: 'in', w: 2,  h: 2  },
+  { country: 'Indonesia',      unit: 'mm', w: 40, h: 60 },
+  { country: 'Iran',           unit: 'mm', w: 40, h: 60 },
+  { country: 'Ireland',        unit: 'mm', w: 35, h: 45 },
+  { country: 'Italy',          unit: 'mm', w: 35, h: 45 },
+  { country: 'Japan',          unit: 'mm', w: 35, h: 45 },
+  { country: 'Kenya',          unit: 'mm', w: 51, h: 64 },
+  { country: 'Malaysia',       unit: 'mm', w: 35, h: 50 },
+  { country: 'Mexico',         unit: 'mm', w: 35, h: 45 },
+  { country: 'Morocco',        unit: 'mm', w: 35, h: 45 },
+  { country: 'Nepal',          unit: 'mm', w: 35, h: 45 },
+  { country: 'Netherlands',    unit: 'mm', w: 35, h: 45 },
+  { country: 'New Zealand',    unit: 'mm', w: 35, h: 45 },
+  { country: 'Nigeria',        unit: 'mm', w: 35, h: 45 },
+  { country: 'Pakistan',       unit: 'mm', w: 35, h: 45 },
+  { country: 'Peru',           unit: 'in', w: 2,  h: 2  },
+  { country: 'Philippines',    unit: 'mm', w: 35, h: 45 },
+  { country: 'Poland',         unit: 'mm', w: 35, h: 45 },
+  { country: 'Portugal',       unit: 'mm', w: 35, h: 45 },
+  { country: 'Russia',         unit: 'mm', w: 35, h: 45 },
+  { country: 'Saudi Arabia',   unit: 'mm', w: 40, h: 60 },
+  { country: 'Singapore',      unit: 'mm', w: 35, h: 45 },
+  { country: 'South Africa',   unit: 'mm', w: 35, h: 45 },
+  { country: 'South Korea',    unit: 'mm', w: 35, h: 45 },
+  { country: 'Spain',          unit: 'mm', w: 26, h: 32 },
+  { country: 'Thailand',       unit: 'mm', w: 35, h: 45 },
+  { country: 'Turkey',         unit: 'mm', w: 50, h: 60 },
+  { country: 'UAE',            unit: 'mm', w: 40, h: 60 },
+  { country: 'United Kingdom', unit: 'mm', w: 35, h: 45 },
+  { country: 'United States',  unit: 'in', w: 2,  h: 2  },
+  { country: 'Vietnam',        unit: 'mm', w: 40, h: 60 },
+];
+
+function passportLabel(p) {
+  const mmW = p.unit === 'in' ? p.w * 25.4 : p.w;
+  const mmH = p.unit === 'in' ? p.h * 25.4 : p.h;
+  const inW = p.unit === 'in' ? p.w : p.w / 25.4;
+  const inH = p.unit === 'in' ? p.h : p.h / 25.4;
+  const fi = v => Number.isInteger(v) ? String(v) : v.toFixed(2);
+  const fm = v => Number.isInteger(v) ? String(v) : String(Math.round(v));
+  return `${p.country} — ${fi(inW)} × ${fi(inH)} in (${fm(mmW)} × ${fm(mmH)} mm)`;
+}
+
+(function initPassport() {
+  const sel = $('passportPreset');
+  const custom = document.createElement('option');
+  custom.value = '-1';
+  custom.textContent = 'Custom / none';
+  sel.appendChild(custom);
+  PASSPORT_PRESETS.forEach((p, i) => {
+    const o = document.createElement('option');
+    o.value = String(i);
+    o.textContent = passportLabel(p);
+    sel.appendChild(o);
+  });
+})();
+
+function passportPixels(p, dpi) {
+  const mmW = p.unit === 'in' ? p.w * 25.4 : p.w;
+  const mmH = p.unit === 'in' ? p.h * 25.4 : p.h;
+  return { w: Math.round(mmW / 25.4 * dpi), h: Math.round(mmH / 25.4 * dpi), mmW, mmH };
+}
+
+function applyPassportPreset() {
+  const idx = Number($('passportPreset').value);
+  if (idx < 0) {
+    $('passportHelp').textContent = 'Choose a passport preset or enter custom pixel dimensions.';
+    return;
+  }
+  const p = PASSPORT_PRESETS[idx];
+  if (!p) return;
+  const dpi = Number($('passportDpi').value) || 300;
+  const px = passportPixels(p, dpi);
+  $('resizeWidth').value = String(px.w);
+  $('resizeHeight').value = String(px.h);
+  $('lockRatio').checked = true;
+  const inW = (px.mmW / 25.4).toFixed(2);
+  const inH = (px.mmH / 25.4).toFixed(2);
+  $('passportHelp').textContent = `${p.country}: ${Math.round(px.mmW)} × ${Math.round(px.mmH)} mm (${inW} × ${inH} in) → ${px.w} × ${px.h} px at ${dpi} DPI.`;
+}
+
+$('passportPreset').addEventListener('change', applyPassportPreset);
+$('passportDpi').addEventListener('change', applyPassportPreset);
+for (const id of ['resizeWidth', 'resizeHeight']) {
+  $(id).addEventListener('input', () => {
+    $('passportPreset').value = '-1';
+    $('passportHelp').textContent = 'Custom pixel dimensions.';
+  });
+}
 
 /* ---------- folder mode ---------- */
 const pickerSupported = typeof window.showDirectoryPicker === 'function' && window.isSecureContext;
@@ -867,11 +986,23 @@ const nativeOk = (f) => Boolean(browserSupport[f]);
 const formatAvailable = (f) => f === 'svg' || f === 'original' || nativeOk(f) || (ffmpegReady && FFMPEG_FORMATS.has(f));
 function populateFormatDropdown(preferred) {
   const prev = preferred || outputFormat.value;
-  const labels = { webp: 'WebP (Recommended)', jpeg: 'JPEG', png: 'PNG', avif: 'AVIF', gif: 'GIF', bmp: 'BMP', svg: 'SVG (Vector)', original: 'Keep Original' };
+  const labels = {
+    webp: 'WebP (native)',
+    jpeg: 'JPEG',
+    png:  'PNG',
+    avif: 'AVIF',
+    tiff: 'TIFF',
+    apng: 'APNG',
+    tga:  'TGA',
+    gif:  'GIF',
+    bmp:  'BMP',
+    svg:  'SVG (vector)',
+    original: 'Keep original'
+  };
   outputFormat.textContent = '';
   for (const f of FORMAT_ORDER) {
     if (!formatAvailable(f)) continue;
-    const o = document.createElement('option'); o.value = f; o.textContent = labels[f]; outputFormat.appendChild(o);
+    const o = document.createElement('option'); o.value = f; o.textContent = labels[f] || f; outputFormat.appendChild(o);
   }
   if (prev && [...outputFormat.options].some((o) => o.value === prev)) outputFormat.value = prev;
   else if (outputFormat.options.length) outputFormat.selectedIndex = 0;
@@ -1002,6 +1133,9 @@ function encodeWithFfmpeg(file, format, s) {
       else if (format === 'webp') a.push('-c:v', 'libwebp', '-quality', String(Math.round(q)), '-method', '4', '-frames:v', '1');
       else if (format === 'jpeg') a.push('-c:v', 'mjpeg', '-q:v', String(Math.max(2, Math.min(31, Math.round(31 - (q / 100) * 29)))), '-frames:v', '1', '-pix_fmt', 'yuvj420p');
       else if (format === 'png') a.push('-c:v', 'png', '-compression_level', String(Math.min(9, Math.round((100 - q) / 11))), '-frames:v', '1');
+      else if (format === 'tiff') a.push('-c:v', 'tiff', '-frames:v', '1');
+      else if (format === 'apng') a.push('-c:v', 'apng', '-plays', '0', '-frames:v', '1');
+      else if (format === 'tga') a.push('-c:v', 'tga', '-frames:v', '1');
       else if (format === 'gif') a.push('-c:v', 'gif', '-frames:v', '1');
       else if (format === 'bmp') a.push('-c:v', 'bmp', '-frames:v', '1');
       a.push('-y', outN);
@@ -1436,32 +1570,6 @@ async function downloadAllAsZip() {
 
 /* ---------- search ---------- */
 $('queueSearch').addEventListener('input', applyFilter);
-
-/* ---------- copy diagnostics ---------- */
-$('copyDiag').addEventListener('click', () => {
-  const diag = {
-    format: outputFormat.value,
-    quality: Number($('qualityLevel').value),
-    workers: getWorkers(),
-    maxCores,
-    resize: { w: $('resizeWidth').value, h: $('resizeHeight').value, lock: $('lockRatio').checked },
-    theme: (() => { try { return document.documentElement.getAttribute('data-theme') || 'system'; } catch { return 'system'; } })(),
-    counts: { ...counts },
-    total,
-    paused,
-    folderMode: Boolean(outDir),
-    ffmpegReady,
-    pickerSupported,
-    browserSupport,
-    view: filesSection.classList.contains('cards-view') ? 'cards' : filesSection.classList.contains('compact') ? 'compact' : 'list',
-  };
-  const text = JSON.stringify(diag, null, 2);
-  if (navigator.clipboard?.writeText) {
-    navigator.clipboard.writeText(text).then(() => notify('Diagnostics copied.')).catch(() => notify('Copy failed.', 'err'));
-  } else {
-    notify('Clipboard unavailable.', 'warn');
-  }
-});
 
 /* ---------- keyboard shortcuts ---------- */
 document.addEventListener('keydown', (e) => {
